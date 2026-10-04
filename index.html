@@ -1,0 +1,919 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>婦癌唸書筆記</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+
+<!-- 筆記內文的排版：匯出離線 HTML 時會連同這段一起帶走 -->
+<style id="noteCss">
+:root{
+  --bg:#E8EDEB; --paper:#FFFFFF; --ink:#17201F; --muted:#5A6866; --line:#C9D3D0;
+  --teal:#0A6A61; --teal-d:#07504A; --wash:#E1EDEA; --hl:#FFE873; --plum:#8B2A5E; --danger:#A3301F;
+  --serif:"Source Serif 4","Noto Serif TC","Songti TC","PMingLiU",serif;
+  --sans:"Source Sans 3","Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+}
+.doc{font:400 1rem/1.8 var(--sans);color:var(--ink);overflow-wrap:anywhere}
+.doc h2{font:700 1.65rem/1.3 var(--serif);margin:0 0 .3rem}
+.doc h3{font:700 1.2rem/1.4 var(--serif);margin:2.2rem 0 .6rem;padding-bottom:.3rem;border-bottom:1px solid var(--teal)}
+.doc h4{font:600 1.03rem/1.5 var(--sans);margin:1.2rem 0 .3rem;color:var(--teal-d)}
+.doc h5,.doc h6{font:600 .97rem/1.5 var(--sans);margin:1rem 0 .2rem}
+.doc p{margin:.5rem 0}
+.doc ul,.doc ol{margin:.3rem 0 .6rem;padding-left:1.35rem}
+.doc li{margin:.12rem 0}
+.doc li>ul,.doc li>ol{margin:.1rem 0 .2rem}
+.doc .tw{overflow-x:auto;margin:.8rem 0}
+.doc table{border-collapse:collapse;font-size:.93rem;line-height:1.55;min-width:60%}
+.doc th,.doc td{border:1px solid var(--line);padding:.35rem .6rem;vertical-align:top;text-align:left}
+.doc th{background:var(--wash);font-weight:600}
+.doc code{font-size:.9em;background:var(--wash);padding:.05em .3em}
+.doc blockquote{border-left:3px solid var(--line);margin:.6rem 0;padding:.05rem .9rem;color:var(--muted)}
+.doc hr{border:0;border-top:1px solid var(--line);margin:1.5rem 0}
+.doc mark{background:var(--hl)}
+/* 新文獻補充：螢光筆劃過的行 + 行尾的出處 */
+.doc .hl{background:linear-gradient(transparent 58%,var(--hl) 58%)}
+.doc a.cite{font:italic 400 .82rem/1 var(--serif);color:var(--plum);text-decoration:none;border-bottom:1px dotted var(--plum);margin-left:.35rem;white-space:nowrap;cursor:pointer}
+.doc .src{color:var(--muted);font-size:.9rem;margin:0}
+.doc .refs{font-size:.92rem}
+.doc .refs li{margin:.5rem 0}
+</style>
+
+<style>
+*{box-sizing:border-box}
+html{font-size:16px}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 1rem/1.6 var(--sans)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+
+.top{position:sticky;top:0;z-index:5;background:var(--paper);border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:2rem;padding:.7rem 1.5rem 0}
+.top h1{font:700 1.25rem/1.2 var(--serif);margin:0 0 .7rem;white-space:nowrap}
+#tabs{display:flex;gap:1.4rem;overflow-x:auto}
+#tabs button{background:none;border:0;border-bottom:3px solid transparent;padding:.2rem 0 .65rem;color:var(--muted);white-space:nowrap}
+#tabs button[aria-current="page"]{color:var(--ink);border-bottom-color:var(--teal);font-weight:600}
+#saved{margin-left:auto;font-size:.82rem;color:var(--muted);white-space:nowrap}
+
+main{max-width:78rem;margin:0 auto;padding:1.5rem}
+.paper{background:var(--paper);border:1px solid var(--line);padding:2.2rem 2.6rem}
+.narrow{max-width:54rem;margin:0 auto}
+h2.vt{font:700 1.5rem/1.3 var(--serif);margin:0 0 .3rem}
+.lead{color:var(--muted);margin:0 0 1.4rem;max-width:44rem}
+h3.st{font:700 1.08rem/1.4 var(--serif);margin:2rem 0 .6rem;padding-top:1rem;border-top:1px solid var(--line)}
+.muted{color:var(--muted)} .small{font-size:.88rem}
+
+.btn{background:var(--paper);border:1px solid var(--ink);padding:.4rem .9rem;border-radius:2px}
+.btn:hover{background:var(--wash)}
+.btn.pri{background:var(--teal);border-color:var(--teal);color:#fff}
+.btn.pri:hover{background:var(--teal-d)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.link{background:none;border:0;padding:0;color:var(--teal-d);text-decoration:underline;text-underline-offset:2px}
+.link.danger{color:var(--danger)}
+.row{display:flex;flex-wrap:wrap;gap:.6rem 1rem;align-items:center}
+label.f{display:block;margin:.9rem 0 .25rem;font-weight:600}
+input[type=text],input[type=password],input[type=search],input[type=number],select,textarea{border:1px solid var(--line);background:#fff;padding:.4rem .55rem;border-radius:2px;max-width:100%}
+input[type=text],input[type=password],textarea{width:100%}
+textarea{line-height:1.6;resize:vertical}
+.chk{display:inline-flex;gap:.4rem;align-items:center}
+
+.drop{border:2px dashed var(--line);padding:2rem 1rem;text-align:center;color:var(--muted);background:#FAFCFB}
+.drop.over{border-color:var(--teal);background:var(--wash);color:var(--ink)}
+
+/* 筆記頁 */
+.notes{display:grid;grid-template-columns:17.5rem minmax(0,1fr);gap:1.5rem;align-items:start}
+.side{position:sticky;top:4.2rem;max-height:calc(100vh - 5.5rem);overflow:auto;font-size:.95rem}
+.side input[type=search]{width:100%}
+.bk{margin-top:1.1rem}
+.bk-t{font:700 .98rem/1.4 var(--serif);display:flex;justify-content:space-between;gap:.5rem;border-bottom:1px solid var(--line);padding-bottom:.25rem}
+.bk ul{list-style:none;margin:.3rem 0 0;padding:0}
+.bk li button{display:flex;justify-content:space-between;gap:.5rem;width:100%;text-align:left;background:none;border:0;border-left:3px solid transparent;padding:.28rem .5rem;line-height:1.4}
+.bk li button:hover{background:rgba(10,106,97,.08)}
+.bk li button[aria-current="true"]{border-left-color:var(--teal);background:var(--paper);font-weight:600}
+.cnt{font:italic .8rem var(--serif);color:var(--plum);white-space:nowrap}
+.ch-tools{display:flex;flex-wrap:wrap;gap:.3rem 1rem;margin:.5rem 0 0;font-size:.88rem}
+.sec>h3{display:flex;justify-content:space-between;align-items:baseline;gap:1rem}
+.sec>h3 .link{font:400 .82rem var(--sans);flex:none}
+.sec-edit input{font-weight:600;margin-bottom:.4rem}
+.sec-edit textarea{min-height:16rem;font-size:.92rem}
+mark.q{background:#BFE3DC}
+
+/* 表格式清單 */
+table.grid{border-collapse:collapse;width:100%;font-size:.94rem}
+table.grid th,table.grid td{border-bottom:1px solid var(--line);padding:.35rem .4rem;text-align:left;vertical-align:middle}
+table.grid th{font-weight:600;color:var(--muted);font-size:.85rem}
+table.grid input[type=number]{width:5rem}
+table.grid td.st-ok{color:var(--teal-d)} table.grid td.st-err{color:var(--danger)}
+
+/* 文獻比對 */
+.paper-res{border-top:2px solid var(--ink);margin-top:2rem;padding-top:1rem}
+.paper-res h4{font:700 1.08rem/1.4 var(--serif);margin:0 0 .3rem}
+.item{display:grid;grid-template-columns:1.5rem minmax(0,1fr);gap:.2rem .5rem;align-items:start;padding:.9rem 0;border-top:1px solid var(--line)}
+.item>input{margin-top:.55rem}
+.item textarea{font-size:.92rem;min-height:5rem;margin-top:.4rem}
+.item select{font-size:.88rem;max-width:100%}
+.rel{font-weight:600;margin-right:.6rem}
+.rel.update,.rel.conflict{color:var(--plum)} .rel.covered{color:var(--muted)} .rel.new{color:var(--teal-d)}
+
+#status{position:fixed;left:0;right:0;bottom:0;z-index:8;background:var(--ink);color:#fff;padding:.6rem 1.5rem;display:flex;gap:1rem;align-items:center;justify-content:space-between;font-size:.92rem}
+#status[hidden]{display:none}
+#status button{background:none;border:1px solid #fff;color:#fff;padding:.15rem .8rem;border-radius:2px}
+#toast{position:fixed;left:50%;bottom:4rem;transform:translateX(-50%);background:var(--ink);color:#fff;padding:.55rem 1rem;font-size:.92rem;max-width:90vw;opacity:0;pointer-events:none;transition:opacity .2s;z-index:9}
+#toast.on{opacity:1}
+dialog{border:1px solid var(--ink);padding:1.5rem 1.8rem;max-width:min(40rem,92vw);border-radius:2px}
+dialog::backdrop{background:rgba(23,32,31,.45)}
+dialog h3{font:700 1.1rem/1.4 var(--serif);margin:0 0 .6rem}
+
+@media (max-width:820px){
+  .top{flex-direction:column;align-items:stretch;gap:.2rem;padding:.6rem 1rem 0}
+  .top h1{margin-bottom:.2rem}
+  #saved{display:none}
+  main{padding:1rem}
+  .paper{padding:1.3rem 1.1rem}
+  .notes{grid-template-columns:1fr}
+  .side{position:static;max-height:none}
+  #tree{max-height:38vh;overflow:auto}
+}
+@media (prefers-reduced-motion:reduce){#toast{transition:none}}
+@media print{
+  .top,.side,#status,#toast,.ch-tools,.sec>h3 .link,.noprint{display:none!important}
+  body{background:#fff} main{padding:0;max-width:none} .notes{display:block} .paper{border:0;padding:0}
+  .doc{font-size:10.5pt;line-height:1.6} .doc h3{break-after:avoid} .doc table{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>婦癌唸書筆記</h1>
+  <nav id="tabs" aria-label="主要功能">
+    <button data-act="tab" data-tab="notes">筆記</button>
+    <button data-act="tab" data-tab="book">匯入電子書</button>
+    <button data-act="tab" data-tab="lit">加入新文獻</button>
+    <button data-act="tab" data-tab="exam">考試筆記</button>
+    <button data-act="tab" data-tab="set">設定</button>
+  </nav>
+  <span id="saved"></span>
+</header>
+<main id="main"></main>
+<div id="status" hidden><span id="statusText"></span><button data-act="stop">停止</button></div>
+<div id="toast" role="status"></div>
+<dialog id="dlg"></dialog>
+<input type="file" id="filePick" hidden>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+'use strict';
+/* ========== 基本工具 ========== */
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const wait=(ms,signal)=>new Promise((res,rej)=>{const t=setTimeout(res,ms);signal?.addEventListener('abort',()=>{clearTimeout(t);rej(new DOMException('已停止','AbortError'));},{once:true});});
+let toastT; function toast(msg,ms=3200){const t=$('#toast');t.textContent=msg;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),ms);}
+function download(name,content,mime){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type:mime}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);}
+const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
+const fileSafe=s=>String(s).replace(/[\\/:*?"<>|\s]+/g,'_').slice(0,60);
+
+/* ========== 儲存：筆記在 IndexedDB，設定在 localStorage ========== */
+const DB={db:null,
+  open(){return new Promise(res=>{try{const r=indexedDB.open('gynonc-study-notes',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>{this.db=r.result;res();};r.onerror=()=>res();}catch(e){res();}});},
+  get(k){return new Promise(res=>{if(!this.db){try{res(JSON.parse(localStorage.getItem('gn_'+k)));}catch(e){res(null);}return;}const q=this.db.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>res(q.result??null);q.onerror=()=>res(null);});},
+  set(k,v){return new Promise(res=>{if(!this.db){try{localStorage.setItem('gn_'+k,JSON.stringify(v));}catch(e){}res();return;}const tx=this.db.transaction('kv','readwrite');tx.objectStore('kv').put(v,k);tx.oncomplete=()=>res();tx.onerror=()=>res();});}
+};
+const blank=()=>({seq:{b:0,c:0,s:0,e:0},books:[],chapters:[],sources:[],exams:[]});
+let S=blank();
+let CFG={apiKey:'',model:'gemini-3.1-pro-preview',thinking:'high',level:'standard'};
+try{Object.assign(CFG,JSON.parse(localStorage.getItem('gn_cfg')||'{}'));}catch(e){}
+const saveCfg=()=>{try{localStorage.setItem('gn_cfg',JSON.stringify(CFG));}catch(e){}};
+let saveT; function save(){clearTimeout(saveT);saveT=setTimeout(async()=>{await DB.set('state',S);$('#saved').textContent='已儲存在這台裝置 '+new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});},250);}
+
+const UI={tab:'notes',chapterId:null,onlyNew:false,q:'',examId:null,editSec:null};
+const getCh=id=>S.chapters.find(c=>c.id===id);
+const getBook=id=>S.books.find(b=>b.id===id);
+const getSrc=id=>S.sources.find(s=>s.id===id);
+const bookTitle=c=>getBook(c.bookId)?.title||'';
+const chaptersOf=b=>S.chapters.filter(c=>c.bookId===b.id).sort((a,b)=>a.order-b.order);
+const allChapters=()=>S.books.flatMap(chaptersOf);
+const newCount=c=>c.sections.reduce((n,s)=>n+(s.md.match(/^.*\[\^S\d+\].*$/gm)||[]).length,0);
+const chapterMd=(c,ids)=>c.sections.map(s=>(ids?'['+s.id+'] ':'')+'## '+s.heading+'\n'+s.md).join('\n\n');
+function addBook(title){const b={id:'B'+(++S.seq.b),title};S.books.push(b);return b;}
+function addChapter(book,title,pages){const c={id:'C'+(++S.seq.c),bookId:book.id,order:chaptersOf(book).length,title,pages:pages||'',sections:[],sseq:0,rev:Date.now()};S.chapters.push(c);return c;}
+function addSection(c,heading,md,beforeReview){const s={id:c.id+'.'+(++c.sseq),heading,md:md||''};const i=beforeReview?c.sections.findIndex(x=>/^重點回顧/.test(x.heading)):-1;if(i>=0)c.sections.splice(i,0,s);else c.sections.push(s);return s;}
+
+/* ========== Markdown → HTML（輸入一律先 escape） ========== */
+function inlineMd(s){
+  s=esc(s);
+  s=s.replace(/`([^`]+)`/g,'<code>$1</code>');
+  s=s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+  s=s.replace(/(^|[^*])\*([^*\s][^*]*)\*/g,'$1<em>$2</em>');
+  s=s.replace(/==([^=]+)==/g,'<mark>$1</mark>');
+  return s;
+}
+function lineMd(raw){
+  const ids=[];const rest=raw.replace(/\s*\[\^(S\d+)\]/g,(m,id)=>{ids.push(id);return '';});
+  let h=inlineMd(rest);
+  if(ids.length){h='<span class="hl">'+h+'</span>'+[...new Set(ids)].map(id=>{const s=getSrc(id);return '<a class="cite" data-src="'+id+'" href="#src-'+id+'">'+esc(s?s.short:id)+'</a>';}).join('');}
+  return h;
+}
+const RE_LIST=/^(\s*)([-*+]|\d+[.)])\s+(.*)$/;
+const isTableRow=l=>/^\s*\|.*\|\s*$/.test(l);
+const isTableSep=l=>/^\s*\|?[\s:|-]+\|?\s*$/.test(l)&&l.includes('-');
+const cells=l=>l.trim().replace(/^\|/,'').replace(/\|$/,'').split('|').map(x=>x.trim());
+function mdRender(src){
+  const L=String(src||'').replace(/\r/g,'').split('\n');let out='',i=0,m;
+  const blockStart=k=>/^#{1,6}\s/.test(L[k])||RE_LIST.test(L[k])||/^\s*>/.test(L[k])||(isTableRow(L[k])&&k+1<L.length&&isTableSep(L[k+1]));
+  while(i<L.length){
+    const l=L[i];
+    if(!l.trim()){i++;continue;}
+    if((m=l.match(/^(#{1,6})\s+(.*)$/))){const n=Math.min(6,Math.max(3,m[1].length+1));out+='<h'+n+'>'+lineMd(m[2])+'</h'+n+'>';i++;continue;}
+    if(/^\s*(-{3,}|\*{3,})\s*$/.test(l)){out+='<hr>';i++;continue;}
+    if(isTableRow(l)&&i+1<L.length&&isTableSep(L[i+1])){
+      out+='<div class="tw"><table><thead><tr>'+cells(l).map(c=>'<th>'+lineMd(c)+'</th>').join('')+'</tr></thead><tbody>';i+=2;
+      while(i<L.length&&isTableRow(L[i])){out+='<tr>'+cells(L[i]).map(c=>'<td>'+lineMd(c)+'</td>').join('')+'</tr>';i++;}
+      out+='</tbody></table></div>';continue;
+    }
+    if(RE_LIST.test(l)){
+      const st=[];
+      while(i<L.length&&(m=L[i].match(RE_LIST))){
+        const ind=m[1].replace(/\t/g,'  ').length,ord=/\d/.test(m[2]);
+        while(st.length&&ind<st[st.length-1].ind)out+='</li></'+st.pop().tag+'>';
+        if(!st.length||ind>st[st.length-1].ind){const tag=ord?'ol':'ul';out+='<'+tag+'>';st.push({ind,tag});}else out+='</li>';
+        out+='<li>'+lineMd(m[3]);i++;
+      }
+      while(st.length)out+='</li></'+st.pop().tag+'>';continue;
+    }
+    if(/^\s*>/.test(l)){const b=[];while(i<L.length&&/^\s*>/.test(L[i])){b.push(L[i].replace(/^\s*>\s?/,''));i++;}out+='<blockquote>'+b.map(lineMd).join('<br>')+'</blockquote>';continue;}
+    const p=[l];i++;while(i<L.length&&L[i].trim()&&!blockStart(i)){p.push(L[i]);i++;}
+    out+='<p>'+p.map(lineMd).join('<br>')+'</p>';
+  }
+  return out;
+}
+function cleanMd(t){return String(t||'').trim().replace(/^```(?:markdown|md)?\s*\n/i,'').replace(/\n```\s*$/,'').trim();}
+function splitSections(text){
+  const secs=[],pre=[];let cur=null;
+  for(const l of cleanMd(text).split('\n')){
+    const m=l.match(/^##\s+(.*)$/);
+    if(m){cur={heading:m[1].trim(),lines:[]};secs.push(cur);}
+    else if(/^#\s+/.test(l))continue;
+    else (cur?cur.lines:pre).push(l);
+  }
+  if(pre.join('').trim())secs.unshift({heading:'概要',lines:pre});
+  return secs.map(s=>({heading:s.heading,md:s.lines.join('\n').trim()}));
+}
+function parseJSON(t){
+  t=String(t).trim().replace(/^```(?:json)?\s*/i,'').replace(/```\s*$/,'');
+  try{return JSON.parse(t);}catch(e){const a=t.indexOf('{'),b=t.lastIndexOf('}');if(a>=0&&b>a){try{return JSON.parse(t.slice(a,b+1));}catch(e2){}}throw new Error('模型回傳的內容不是完整的 JSON（可能被截斷），請重試一次');}
+}
+
+/* ========== Gemini API ========== */
+const API='https://generativelanguage.googleapis.com/v1beta';
+const FALLBACK=['gemini-3.1-pro-preview','gemini-3.1-pro','gemini-pro-latest'];
+const USAGE={in:0,out:0,model:''};
+const JOB={ctrl:null};
+let OKMODEL=null; // 這次開啟期間實際可用的模型，避免每次都先撞一次 404
+function setStatus(t){$('#status').hidden=!t;$('#statusText').textContent=t||'';}
+async function runJob(fn){
+  if(JOB.ctrl){toast('上一個工作還在進行，請等它完成或按「停止」');return;}
+  if(!CFG.apiKey){toast('先到「設定」填入 Gemini API key');go('set');return;}
+  JOB.ctrl=new AbortController();
+  try{await fn(JOB.ctrl.signal);}
+  catch(e){if(e.name==='AbortError')toast('已停止');else{console.error(e);toast(e.message||String(e),8000);}}
+  finally{JOB.ctrl=null;setStatus('');save();}
+}
+async function apiError(res){let msg='';try{const j=await res.json();msg=j.error?.message||JSON.stringify(j);}catch(e){try{msg=await res.text();}catch(e2){}}return msg;}
+async function gemini(o){
+  const chain=[OKMODEL||CFG.model,...FALLBACK].filter((m,i,a)=>m&&a.indexOf(m)===i);let last;
+  for(const model of chain){
+    try{const r=await callModel(model,o);OKMODEL=model;return r;}
+    catch(e){if(e.status===404){last=e;continue;}throw e;}
+  }
+  throw new Error('找不到可用的模型（'+chain.join('、')+'）。到「設定」按「列出可用模型」挑一個。'+(last?' '+last.message:''));
+}
+async function callModel(model,o){
+  let useThinking=/gemini-3|latest/.test(model),useMax=true;
+  for(let attempt=0;;attempt++){
+    const gc={};
+    if(useMax)gc.maxOutputTokens=65536;
+    if(o.json){gc.responseMimeType='application/json';if(o.schema)gc.responseSchema=o.schema;}
+    if(useThinking)gc.thinkingConfig={thinkingLevel:o.thinking||CFG.thinking};
+    const body={contents:[{role:'user',parts:o.parts}],generationConfig:gc};
+    if(o.system)body.systemInstruction={parts:[{text:o.system}]};
+    const res=await fetch(API+'/models/'+encodeURIComponent(model)+':streamGenerateContent?alt=sse',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':CFG.apiKey},body:JSON.stringify(body),signal:o.signal});
+    if(!res.ok){
+      const msg=await apiError(res);
+      if(res.status===400&&useThinking&&/thinking/i.test(msg)){useThinking=false;continue;}
+      if(res.status===400&&useMax&&/max.?output/i.test(msg)){useMax=false;continue;}
+      if([429,500,503].includes(res.status)&&attempt<3){const s=[10,25,60][attempt];setStatus('Gemini 暫時忙線（'+res.status+'），'+s+' 秒後自動重試');await wait(s*1000,o.signal);continue;}
+      const hint=res.status===429?'用量已達上限，稍後再試或檢查帳單方案。':(res.status===400&&/API key/i.test(msg))||res.status===403?'API key 無效或沒有這個模型的權限。':'';
+      const e=new Error('Gemini 回覆錯誤 '+res.status+'：'+hint+msg.slice(0,300));e.status=res.status;throw e;
+    }
+    let text='',finish='',block='',usage=null;
+    const handle=j=>{
+      if(j.error)throw new Error('Gemini 回覆錯誤：'+(j.error.message||''));
+      if(j.promptFeedback?.blockReason)block=j.promptFeedback.blockReason;
+      const c=j.candidates?.[0];
+      if(c){for(const p of c.content?.parts||[])if(p.text&&!p.thought)text+=p.text;if(c.finishReason)finish=c.finishReason;}
+      if(j.usageMetadata)usage=j.usageMetadata;
+      o.onText?.(text);
+    };
+    const reader=res.body.getReader(),dec=new TextDecoder();let buf='';
+    const feed=line=>{line=line.replace(/\r$/,'');if(line.startsWith('data:')){const d=line.slice(5).trim();if(d&&d!=='[DONE]')handle(JSON.parse(d));}};
+    for(;;){const {done,value}=await reader.read();if(done)break;buf+=dec.decode(value,{stream:true});let k;while((k=buf.indexOf('\n'))>=0){feed(buf.slice(0,k));buf=buf.slice(k+1);}}
+    if(buf.trim())feed(buf);
+    if(usage){USAGE.in+=usage.promptTokenCount||0;USAGE.out+=(usage.candidatesTokenCount||0)+(usage.thoughtsTokenCount||0);}
+    USAGE.model=model;
+    if(block)throw new Error('這份內容被 Gemini 的安全過濾擋下（'+block+'）');
+    if(!text.trim())throw new Error('Gemini 沒有產出內容'+(finish?'（'+finish+'）':'')+(finish==='RECITATION'?'：內容過於接近原文而被中止，改用較精簡的詳略度再試':''));
+    return {text,model,finish,truncated:finish==='MAX_TOKENS'};
+  }
+}
+function toB64(bytes){return new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(fr.result.slice(fr.result.indexOf(',')+1));fr.onerror=()=>rej(fr.error);fr.readAsDataURL(new Blob([bytes]));});}
+const INLINE_MAX=14*1024*1024, FILE_MAX=50*1024*1024;
+async function filePart(bytes,mime,name,signal){
+  if(bytes.byteLength>FILE_MAX)throw new Error('「'+name+'」超過 Gemini 單檔 50MB 上限，請把頁數範圍切小一點，或改用文字模式');
+  if(bytes.byteLength<=INLINE_MAX)return {inlineData:{mimeType:mime,data:await toB64(bytes)}};
+  setStatus('檔案較大，先上傳到 Gemini（'+(bytes.byteLength/1048576).toFixed(1)+' MB）');
+  const start=await fetch('https://generativelanguage.googleapis.com/upload/v1beta/files',{method:'POST',signal,headers:{'x-goog-api-key':CFG.apiKey,'X-Goog-Upload-Protocol':'resumable','X-Goog-Upload-Command':'start','X-Goog-Upload-Header-Content-Length':String(bytes.byteLength),'X-Goog-Upload-Header-Content-Type':mime,'Content-Type':'application/json'},body:JSON.stringify({file:{display_name:name}})});
+  if(!start.ok)throw new Error('上傳失敗 '+start.status+'：'+(await apiError(start)).slice(0,200));
+  const url=start.headers.get('x-goog-upload-url');
+  if(!url)throw new Error('上傳失敗：瀏覽器拿不到上傳網址。請把頁數範圍切小（單章 14MB 以下會直接內嵌傳送）或改用文字模式');
+  const up=await fetch(url,{method:'POST',signal,headers:{'X-Goog-Upload-Offset':'0','X-Goog-Upload-Command':'upload, finalize'},body:new Blob([bytes],{type:mime})});
+  if(!up.ok)throw new Error('上傳失敗 '+up.status);
+  let f=(await up.json()).file;
+  for(let i=0;f.state==='PROCESSING'&&i<90;i++){await wait(2000,signal);f=await (await fetch(API+'/'+f.name,{headers:{'x-goog-api-key':CFG.apiKey},signal})).json();}
+  if(f.state==='FAILED')throw new Error('Gemini 無法處理這個檔案');
+  return {fileData:{mimeType:f.mimeType||mime,fileUri:f.uri}};
+}
+
+/* ========== 提示詞 ========== */
+const SYS=`你是協助婦癌科（gynecologic oncology）主治醫師整理唸書筆記的助手，讀者是婦癌專科醫師。
+規則：
+1. 以繁體中文（台灣用語）書寫；英文專業術語、藥名、trial 名稱、分期、基因與 biomarker 一律保留英文原文，不要硬翻成中文。
+2. 只根據提供的來源內容整理，不得加入來源沒有的事實或數字；來源沒寫的就不要寫。
+3. 數字（HR、95% CI、p 值、存活率、劑量、cut-off、分期定義）完整保留，不要改寫成模糊敘述。
+4. 忠實呈現證據強度，不誇大結論；來源提到的 limitations、爭議、未定論要保留。
+5. 直接、精準，不寫開場白與結語。`;
+const LEVELS={
+  concise:{name:'精簡',text:'精簡：只留高頻考點、決策原則與關鍵數字。'},
+  standard:{name:'標準',text:'標準：完整涵蓋本章的主要概念、分期、診斷、治療與重要 trial。'},
+  detailed:{name:'詳盡',text:'詳盡：盡量保留所有臨床相關細節、數字、例外情況與 trial 設計，寧可長不要漏。'}
+};
+const chapterPrompt=(book,title,range,unit,level)=>`以上是《${book}》的一章「${title}」（${range}）。請整理成這一章的唸書筆記。
+
+格式（Markdown）：
+- 不要輸出章節大標題。每個主題小節以 \`## \` 開頭（依本章實際結構，例如 Epidemiology、Pathology、Staging、Treatment、Follow-up…）${unit==='頁'?'，小節標題最後用括號標註來源頁碼，例如 `## Staging (p.45–47)`，頁碼用內容中〔p.N〕的編號':''}。
+- 小節內用巢狀條列（\`- \`），需要時用 \`### \` 次標題。
+- 適合對照的內容（分期、regimen、trial 比較、鑑別診斷、risk group）用 Markdown 表格。
+- 重要 trial 要寫出：名稱、對象、arms、主要結果與數字。
+- 最後加一個小節 \`## 重點回顧\`，列 5–10 條本章最重要的考點。
+詳略度：${LEVELS[level].text}`;
+const detectPrompt=unit=>`以上是一本電子書每一${unit}開頭的文字，方括號內是${unit}的編號。請找出正文各章（chapter）的範圍。
+回傳 JSON：{"title":"書名（判斷不出來就留空）","chapters":[{"title":"章名","start":起始編號,"end":結束編號}]}
+- 只列正文章節；封面、版權頁、目錄、前言、索引略過。
+- 依序排列、範圍不可重疊，end 含該編號。章名用書上的原文。`;
+const routePrompt=outline=>`以上是一篇新文獻。下面是既有唸書筆記的章節大綱（章節 id 如 C3）。請挑出這篇文獻的新知識最可能要寫進去的章節，最多 4 個；都不相關就回傳空陣列。
+回傳 JSON：{"chapterIds":["C3"]}
+
+${outline}`;
+const mergePrompt=notes=>`任務：把以上這篇新文獻的新知識，對照既有的唸書筆記，決定要加在哪裡。
+
+既有筆記（章節 id 如 C3；小節 id 如 C3.2，寫在小節標題前的方括號裡）：
+<notes>
+${notes||'（目前還沒有任何筆記）'}
+</notes>
+
+步驟：
+1. 讀完文獻，擷取值得寫進筆記的知識點（通常 2–8 點；以會改變臨床判斷或考試答案的內容為主，不要逐段摘要）。
+2. 每一點都和既有筆記比對，relation 填：
+   - new：筆記裡沒有。
+   - update：筆記有較舊的資料，這篇提供更新（更長追蹤、新分期、新適應症、新數字）。
+   - conflict：和筆記內容不一致。
+   - covered：筆記已經寫了，不需要再加。
+3. chapterId、sectionId 填最合適的位置。章節合適但沒有合適小節 → sectionId 留空並在 newHeading 給小節名稱。沒有任何合適章節 → chapterId 留空並在 newChapterTitle 給主題名稱（例如 "Ovarian cancer: maintenance therapy"）。
+4. text 是要寫進筆記的內容：1–4 行 Markdown 條列，每行以 \`- \` 開頭，含 trial 名稱與關鍵數字，不要用表格。update／conflict 要在句中點出和原筆記哪裡不同。
+5. anchor：從該小節逐字複製一行既有內容，新內容會插在這一行後面；不確定就留空（會加在小節最後）。
+6. reason：一句話說明比對結果（筆記原本怎麼寫、這篇補了什麼）。
+7. citation.short 是筆記裡顯示的短出處，格式如 "Moore 2018 NEJM (SOLO-1)"。summary 用 3–5 句說明研究設計、樣本數、主要結果；limitations 誠實寫出這篇的限制（回溯性、小樣本、次級分析、追蹤短、單一中心等），不要替研究誇大。`;
+const MERGE_SCHEMA={type:'OBJECT',properties:{
+  citation:{type:'OBJECT',properties:{short:{type:'STRING'},authors:{type:'STRING'},title:{type:'STRING'},journal:{type:'STRING'},year:{type:'STRING'},design:{type:'STRING'},doi:{type:'STRING'}},required:['short','title']},
+  summary:{type:'STRING'},limitations:{type:'STRING'},
+  items:{type:'ARRAY',items:{type:'OBJECT',properties:{relation:{type:'STRING',enum:['new','update','conflict','covered']},chapterId:{type:'STRING'},sectionId:{type:'STRING'},newChapterTitle:{type:'STRING'},newHeading:{type:'STRING'},anchor:{type:'STRING'},text:{type:'STRING'},reason:{type:'STRING'}},required:['relation','text','reason']}}
+},required:['citation','summary','items']};
+const FORMATS={
+  key:{name:'高頻重點',text:'「高頻重點」：條列這個範圍內最常考、最需要背的內容與數字。'},
+  table:{name:'比較表',text:'「比較表」：把分期、regimen、trial、risk group 等適合對照的內容整理成表格。'},
+  pitfall:{name:'易混淆點',text:'「易混淆點」：列出容易記錯、容易被出成陷阱的地方。'},
+  oral:{name:'口試問答',text:'「口試問答」：以 case-based 的口試問法出題，每題附一段可以直接回答的要點（Q:／A: 格式）。'},
+  mcq:{name:'自測選擇題',text:'「自測選擇題」：出 5–8 題單選題，所有答案與一句解析集中放在最後。'}
+};
+const PRESETS={
+  '婦癌專科醫師甄審':'深度：婦癌次專科。重點放在各癌別的 staging、手術適應症與範圍、adjuvant 與 systemic therapy 的選擇及其依據的 pivotal trials（含數字）、molecular classification、復發處理、治療併發症，以及口試常見的 case-based 決策。',
+  '婦產科專科醫師考試':'深度：一般婦產科專科。只保留婦癌的核心：screening 與預防、診斷流程、staging 原則、標準治療、常考的數字；trial 只留名稱與一句結論，次專科的細節刪去。',
+  '住院醫師與 fellow 教學':'深度：臨床實務。以「遇到這個病人要怎麼處理」為主軸：workup、決策點、標準治療、何時轉介或提 tumor board；每個決策附上最主要的一個依據。',
+  '醫學生授課':'深度：醫學生。著重疾病概念、危險因子、典型表現、診斷與治療的大原則；專有名詞第一次出現時附一句說明，不放 trial 細節。'
+};
+const examPrompt=(exam,book,title)=>`以上是《${book}》「${title}」這一章的母本筆記。請依下列考試範圍，重新整理成這場考試用的筆記。
+
+考試：${exam.name}
+範圍與要求：
+${exam.scope||'（未填，依考試名稱判斷深度）'}
+
+規則：
+- 只能使用母本筆記裡的內容，不得新增任何事實或數字。
+- 和這個考試範圍無關的內容刪去。如果整章都不在範圍內，只輸出一行：（本章不在此考試範圍內）
+- 行尾有 [^S數字] 的是新文獻補充，沿用時原樣保留這個標記。
+- 不要輸出章名；依序輸出下列小節，各以 \`## \` 開頭：
+${Object.keys(FORMATS).filter(k=>exam.formats[k]).map(k=>'  - '+FORMATS[k].text).join('\n')}
+詳略度：${LEVELS[exam.level||'standard'].text}`;
+
+/* ========== 電子書讀取（PDF／EPUB／TXT 統一成「單位」：頁、節、段） ========== */
+let BK=null;
+async function openBook(file){
+  const name=file.name,ext=name.split('.').pop().toLowerCase();
+  const bk={file,name,title:name.replace(/\.[^.]+$/,''),kind:ext,unit:'頁',n:0,texts:[],outline:[],rows:[],mode:'text',scanned:false,level:0,maxLevel:0};
+  setStatus('讀取「'+name+'」');
+  if(ext==='pdf'){
+    if(!window.pdfjsLib)throw new Error('PDF 元件沒有載入，請確認網路後重新整理頁面');
+    pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    let pdf;
+    try{pdf=await pdfjsLib.getDocument({data:await file.arrayBuffer(),cMapUrl:'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/',cMapPacked:true}).promise;}
+    catch(e){throw new Error(e.name==='PasswordException'?'這份 PDF 有密碼或 DRM 保護，無法讀取':'無法開啟這份 PDF：'+e.message);}
+    bk.pdf=pdf;bk.n=pdf.numPages;
+    bk.getText=async i=>{if(bk.texts[i]==null){const pg=await pdf.getPage(i);const tc=await pg.getTextContent();bk.texts[i]=tc.items.map(x=>x.str+(x.hasEOL?'\n':' ')).join('').replace(/[ \t]+/g,' ');pg.cleanup();}return bk.texts[i];};
+    // 抽樣檢查有沒有文字層
+    const step=Math.max(1,Math.floor(bk.n/12));let chars=0,cnt=0;
+    for(let i=Math.min(bk.n,3);i<=bk.n&&cnt<12;i+=step){chars+=(await bk.getText(i)).trim().length;cnt++;}
+    if(cnt&&chars/cnt<80){bk.scanned=true;bk.mode='pdf';}
+    try{const ol=await pdf.getOutline();if(ol)bk.outline=await flattenOutline(pdf,ol,0);}catch(e){}
+  }else if(ext==='epub'){
+    if(!window.JSZip)throw new Error('EPUB 元件沒有載入，請確認網路後重新整理頁面');
+    await openEpub(bk);
+  }else if(ext==='txt'||ext==='md'){
+    const t=await file.text();bk.unit='段';const size=3000;
+    for(let i=0;i<t.length;i+=size)bk.texts.push(t.slice(i,i+size));
+    bk.texts.unshift(null);bk.n=bk.texts.length-1;bk.getText=async i=>bk.texts[i]||'';
+  }else throw new Error('目前支援 PDF、EPUB、TXT。其他格式請先轉成 PDF');
+  bk.maxLevel=bk.outline.reduce((m,o)=>Math.max(m,o.depth),0);
+  if(bk.outline.length)rowsFromOutline(bk,0);
+  return bk;
+}
+async function flattenOutline(pdf,items,depth,out=[]){
+  for(const it of items){
+    let page=null;
+    try{let d=it.dest;if(typeof d==='string')d=await pdf.getDestination(d);if(Array.isArray(d)&&d[0]!=null)page=typeof d[0]==='object'?(await pdf.getPageIndex(d[0]))+1:Number(d[0])+1;}catch(e){}
+    if(page)out.push({title:(it.title||'').replace(/\s+/g,' ').trim(),start:page,depth,leaf:!(it.items&&it.items.length)});
+    if(it.items&&it.items.length&&depth<2)await flattenOutline(pdf,it.items,depth+1,out);
+  }
+  return out;
+}
+function rowsFromOutline(bk,level){
+  bk.level=level;
+  const pick=bk.outline.filter(o=>o.depth===level||(o.depth<level&&o.leaf)).sort((a,b)=>a.start-b.start);
+  bk.rows=pick.map((o,i)=>({on:true,title:o.title,start:o.start,end:Math.max(o.start,(i+1<pick.length?pick[i+1].start-1:bk.n)),status:''}));
+}
+function xmlText(node){
+  let out='';const BLOCK=/^(p|div|h[1-6]|li|tr|br|section|blockquote|figcaption|table|dt|dd)$/i;
+  (function walk(n){for(const c of n.childNodes){if(c.nodeType===3)out+=c.nodeValue;else if(c.nodeType===1){const tag=c.localName;if(/^(script|style)$/i.test(tag))continue;if(/^h[1-6]$/i.test(tag))out+='\n# ';walk(c);if(BLOCK.test(tag))out+='\n';else if(/^t[dh]$/i.test(tag))out+=' | ';}}})(node);
+  return out.replace(/[ \t]+/g,' ').replace(/\n\s*\n+/g,'\n').trim();
+}
+async function openEpub(bk){
+  const zip=await JSZip.loadAsync(bk.file);const P=new DOMParser();
+  const read=async p=>{const f=zip.file(p)||zip.file(decodeURIComponent(p));return f?await f.async('string'):null;};
+  const cont=await read('META-INF/container.xml');if(!cont)throw new Error('這不是有效的 EPUB 檔');
+  const opfPath=P.parseFromString(cont,'application/xml').querySelector('rootfile')?.getAttribute('full-path');
+  const opfTxt=opfPath&&await read(opfPath);if(!opfTxt)throw new Error('EPUB 結構無法解析（可能有 DRM）');
+  const opf=P.parseFromString(opfTxt,'application/xml');const base=opfPath.includes('/')?opfPath.slice(0,opfPath.lastIndexOf('/')+1):'';
+  const resolve=(b,h)=>{const parts=(b+h.split('#')[0]).split('/');const o=[];for(const s of parts){if(s==='..')o.pop();else if(s!=='.')o.push(s);}return o.join('/');};
+  const man={};for(const it of opf.getElementsByTagName('*'))if(it.localName==='item')man[it.getAttribute('id')]={href:resolve(base,it.getAttribute('href')||''),props:it.getAttribute('properties')||'',type:it.getAttribute('media-type')||''};
+  const t=[...opf.getElementsByTagName('*')].find(e=>e.localName==='title');if(t&&t.textContent.trim())bk.title=t.textContent.trim();
+  const spine=[...opf.getElementsByTagName('*')].filter(e=>e.localName==='itemref').map(e=>man[e.getAttribute('idref')]).filter(Boolean);
+  bk.unit='節';bk.n=spine.length;bk.texts=[null];
+  bk.getText=async i=>{if(bk.texts[i]==null){const raw=await read(spine[i-1].href)||'';let d=P.parseFromString(raw,'application/xhtml+xml');if(d.querySelector('parsererror'))d=P.parseFromString(raw,'text/html');bk.texts[i]=xmlText(d.body||d.documentElement);}return bk.texts[i];};
+  const idx=href=>spine.findIndex(s=>s.href===href)+1;
+  const nav=Object.values(man).find(m=>/\bnav\b/.test(m.props));
+  const ncx=Object.values(man).find(m=>/ncx/.test(m.type));
+  if(nav){const raw=await read(nav.href);let d=P.parseFromString(raw,'application/xhtml+xml');if(d.querySelector('parsererror'))d=P.parseFromString(raw,'text/html');
+    const navEl=[...d.getElementsByTagName('*')].find(e=>e.localName==='nav'&&/toc/.test(e.getAttribute('epub:type')||e.getAttributeNS('http://www.idpf.org/2007/ops','type')||'toc'));
+    const dir=nav.href.includes('/')?nav.href.slice(0,nav.href.lastIndexOf('/')+1):'';
+    const walk=(ol,depth)=>{for(const li of ol.children){if(li.localName!=='li')continue;const a=[...li.children].find(c=>c.localName==='a');const sub=[...li.children].find(c=>c.localName==='ol');if(a){const s=idx(resolve(dir,a.getAttribute('href')||''));if(s)bk.outline.push({title:a.textContent.replace(/\s+/g,' ').trim(),start:s,depth,leaf:!sub});}if(sub&&depth<2)walk(sub,depth+1);}};
+    const ol=navEl&&[...navEl.children].find(c=>c.localName==='ol');if(ol)walk(ol,0);
+  }
+  if(!bk.outline.length&&ncx){const d=P.parseFromString(await read(ncx.href),'application/xml');const dir=ncx.href.includes('/')?ncx.href.slice(0,ncx.href.lastIndexOf('/')+1):'';
+    const walk=(parent,depth)=>{for(const np of parent.children){if(np.localName!=='navPoint')continue;const lab=[...np.getElementsByTagName('*')].find(e=>e.localName==='text');const con=[...np.children].find(e=>e.localName==='content');const kids=[...np.children].some(e=>e.localName==='navPoint');const s=con?idx(resolve(dir,con.getAttribute('src')||'')):0;if(s)bk.outline.push({title:(lab?.textContent||'').replace(/\s+/g,' ').trim(),start:s,depth,leaf:!kids});if(kids&&depth<2)walk(np,depth+1);}};
+    const map=[...d.getElementsByTagName('*')].find(e=>e.localName==='navMap');if(map)walk(map,0);
+  }
+  // 同一個 spine 檔案可能有多個目錄項，只留第一個
+  const seen=new Set();bk.outline=bk.outline.filter(o=>{const k=o.depth+':'+o.start;if(seen.has(k))return false;seen.add(k);return true;});
+}
+async function rangeText(bk,s,e){let out='';for(let i=s;i<=e;i++)out+='\n\n〔'+(bk.unit==='頁'?'p.':'')+i+'〕\n'+(await bk.getText(i));return out;}
+async function subPdf(bk,s,e){
+  if(!window.PDFLib)throw new Error('PDF 切頁元件沒有載入，請確認網路後重新整理頁面');
+  if(!bk.lib)bk.lib=await PDFLib.PDFDocument.load(await bk.file.arrayBuffer(),{ignoreEncryption:true});
+  const out=await PDFLib.PDFDocument.create();const idxs=[];for(let i=s;i<=e;i++)idxs.push(i-1);
+  (await out.copyPages(bk.lib,idxs)).forEach(p=>out.addPage(p));
+  return await out.save();
+}
+async function detectChapters(signal){
+  const bk=BK;let snip='';
+  for(let i=1;i<=bk.n;i++){if(i%25===0)setStatus('掃描每'+bk.unit+'開頭 '+i+' / '+bk.n);snip+='['+i+'] '+(await bk.getText(i)).trim().slice(0,170).replace(/\s+/g,' ')+'\n';signal.throwIfAborted();}
+  setStatus('請 Gemini 判斷章節範圍');
+  const r=await gemini({parts:[{text:snip},{text:detectPrompt(bk.unit)}],system:SYS,json:true,thinking:'low',signal});
+  const j=parseJSON(r.text);
+  const rows=(j.chapters||[]).map(c=>({on:true,title:String(c.title||'').trim(),start:Math.max(1,Math.min(bk.n,parseInt(c.start)||1)),end:Math.max(1,Math.min(bk.n,parseInt(c.end)||1)),status:''})).filter(r=>r.title&&r.end>=r.start);
+  if(!rows.length)throw new Error('判斷不出章節，請手動填入章名與範圍');
+  bk.rows=rows;if(j.title&&bk.title===bk.name.replace(/\.[^.]+$/,''))bk.title=j.title;
+}
+async function summarizeBook(signal){
+  const bk=BK;readRows();
+  const rows=bk.rows.filter(r=>r.on&&r.title&&r.end>=r.start);
+  if(!rows.length){toast('先勾選要整理的章節');return;}
+  let book=S.books.find(b=>b.title===bk.title);
+  const dup=book?rows.filter(r=>chaptersOf(book).some(c=>c.title===r.title)):[];
+  let overwrite=false;
+  if(dup.length)overwrite=confirm('這本書已有 '+dup.length+' 個同名章節（'+dup.slice(0,3).map(r=>r.title).join('、')+(dup.length>3?'…':'')+'）。\n\n確定：重新整理並取代（該章已加入的文獻補充會一起被取代）\n取消：略過這些章節');
+  if(!book)book=addBook(bk.title);
+  const level=$('#bkLevel')?.value||CFG.level;let done=0;
+  for(const row of rows){
+    const exist=chaptersOf(book).find(c=>c.title===row.title);
+    if(exist&&!overwrite){row.status='已有筆記，略過';paintRow(row);continue;}
+    row.status='整理中…';paintRow(row);
+    const label='整理「'+row.title+'」（'+(++done)+' / '+rows.length+'）';setStatus(label);
+    try{
+      const range=bk.unit==='頁'?'PDF 第 '+row.start+'–'+row.end+' 頁':'第 '+row.start+'–'+row.end+' '+bk.unit;
+      const parts=[];
+      if(bk.mode==='pdf'&&bk.kind==='pdf'){setStatus(label+'：切出這一章的頁面');parts.push(await filePart(await subPdf(bk,row.start,row.end),'application/pdf',fileSafe(row.title)+'.pdf',signal));}
+      else parts.push({text:await rangeText(bk,row.start,row.end)});
+      parts.push({text:chapterPrompt(bk.title,row.title,range,bk.mode==='pdf'?'':bk.unit,level)});
+      const t0=Date.now();
+      const r=await gemini({parts,system:SYS,signal,onText:t=>setStatus(label+'：已寫 '+t.length+' 字，'+Math.round((Date.now()-t0)/1000)+' 秒')});
+      const secs=splitSections(r.text);
+      if(!secs.length)throw new Error('沒有產出小節');
+      let c=exist;
+      if(c){c.sections=[];c.pages=row.start+'–'+row.end;}else c=addChapter(book,row.title,row.start+'–'+row.end);
+      c.unit=bk.unit;secs.forEach(s=>addSection(c,s.heading,s.md));c.rev=Date.now();
+      row.status='完成，'+secs.length+' 個小節'+(r.truncated?'（輸出達上限被截斷，建議把這章拆成兩段）':'');row.ok=true;UI.chapterId=UI.chapterId||c.id;
+      save();
+    }catch(e){if(e.name==='AbortError'){row.status='已停止';paintRow(row);throw e;}row.status='失敗：'+e.message;row.err=true;}
+    paintRow(row);
+  }
+  toast('整理完成，到「筆記」查看');
+}
+
+/* ========== 新文獻：比對 → 提案 → 寫入 ========== */
+const LIT={queue:[],seq:0};let UNDO=null;
+const ROUTE_LIMIT=250000;
+async function analyzePaper(q,signal){
+  q.status='run';q.error='';paintLit();
+  const label='比對「'+q.name+'」';setStatus(label+'：讀取文獻');
+  const src=q.file?await filePart(new Uint8Array(await q.file.arrayBuffer()),q.file.type||'application/pdf',q.name,signal):{text:'【文獻內容】\n'+q.text};
+  let chs=allChapters();
+  const total=chs.reduce((n,c)=>n+chapterMd(c).length,0);
+  if(total>ROUTE_LIMIT&&chs.length>4){
+    setStatus(label+'：先找出相關章節');
+    const outline=chs.map(c=>c.id+'｜《'+bookTitle(c)+'》'+c.title+'：'+c.sections.map(s=>s.heading).join('；')).join('\n');
+    const r=await gemini({parts:[src,{text:routePrompt(outline)}],system:SYS,json:true,thinking:'low',signal});
+    const ids=parseJSON(r.text).chapterIds||[];chs=chs.filter(c=>ids.includes(c.id));
+  }
+  const notes=chs.map(c=>'=== 章節 '+c.id+'｜《'+bookTitle(c)+'》'+c.title+' ===\n'+chapterMd(c,true)).join('\n\n');
+  const t0=Date.now();
+  const r=await gemini({parts:[src,{text:mergePrompt(notes)}],system:SYS,json:true,schema:MERGE_SCHEMA,signal,onText:()=>setStatus(label+'：對照 '+chs.length+' 章筆記，'+Math.round((Date.now()-t0)/1000)+' 秒')});
+  const j=parseJSON(r.text);
+  j.citation=j.citation||{};j.citation.short=j.citation.short||q.name.replace(/\.[^.]+$/,'').slice(0,40);
+  j.items=(j.items||[]).filter(it=>it&&it.text).map(it=>{
+    const c=getCh(it.chapterId);const s=c&&c.sections.find(x=>x.id===it.sectionId);
+    return {relation:['new','update','conflict','covered'].includes(it.relation)?it.relation:'new',chapterId:c?c.id:'',sectionId:s?s.id:'',newChapterTitle:it.newChapterTitle||'',newHeading:it.newHeading||'',anchor:it.anchor||'',text:it.text,reason:it.reason||'',on:it.relation!=='covered'};
+  });
+  q.result=j;q.status='done';
+}
+function tagLines(text,srcId,relation){
+  let ls=String(text||'').replace(/\r/g,'').split('\n').filter(l=>l.trim()&&!/^\s*\|/.test(l)&&!/^#+\s/.test(l));
+  if(!ls.length)return [];
+  ls=ls.map(l=>RE_LIST.test(l)?l.replace(/\t/g,'  '):'- '+l.trim());
+  const min=Math.min(...ls.map(l=>l.match(/^\s*/)[0].length));ls=ls.map(l=>l.slice(min));
+  const label={update:'**〔更新〕** ',conflict:'**〔與原筆記不同〕** '}[relation]||'';
+  return ls.map((l,i)=>{if(i===0&&label)l=l.replace(/^(\s*(?:[-*+]|\d+[.)])\s+)/,'$1'+label);return l.replace(/\s+$/,'').replace(/\s*\[\^S\d+\]/g,'')+' [^'+srcId+']';});
+}
+function insertLines(md,add,anchor){
+  const lines=md?md.split('\n'):[];
+  const norm=s=>s.replace(/\[\^S\d+\]/g,'').replace(/^\s*([-*+]|\d+[.)])\s+/,'').replace(/[*`=]/g,'').replace(/\s+/g,' ').trim();
+  let at=-1;
+  if(anchor){const a=norm(anchor);if(a.length>=4){at=lines.findIndex(l=>norm(l)===a);if(at<0)at=lines.findIndex(l=>{const n=norm(l);return n&&(n.includes(a)||(n.length>=12&&a.includes(n)));});}}
+  if(at<0)return (md&&md.trim()?md.replace(/\s+$/,'')+'\n':'')+add.join('\n');
+  const ind=l=>l.match(/^\s*/)[0].length,base=ind(lines[at]),tbl=/^\s*\|/.test(lines[at]),isLi=RE_LIST.test(lines[at]);
+  let end=at+1;
+  if(tbl){while(end<lines.length&&/^\s*\|/.test(lines[end]))end++;}
+  else if(isLi){while(end<lines.length&&lines[end].trim()&&ind(lines[end])>base)end++;}
+  const ins=add.map(l=>(isLi?' '.repeat(base):'')+l);
+  if(!isLi){ins.unshift('');if(end<lines.length&&lines[end].trim())ins.push('');}
+  lines.splice(end,0,...ins);
+  return lines.join('\n');
+}
+function applyPaper(q){
+  const items=q.result.items.filter(it=>it.on&&it.text.trim());
+  if(!items.length){toast('沒有勾選任何項目');return;}
+  UNDO={state:JSON.stringify(S),qid:q.id};
+  const cit=q.result.citation;
+  const src={id:'S'+(++S.seq.s),short:cit.short,title:cit.title||'',authors:cit.authors||'',journal:cit.journal||'',year:cit.year||'',design:cit.design||'',doi:cit.doi||'',summary:q.result.summary||'',limitations:q.result.limitations||'',file:q.name,addedAt:today(),n:items.length};
+  S.sources.push(src);
+  for(const it of items){
+    let c=getCh(it.chapterId);
+    if(!c){
+      const bt='期刊新知（未歸類）';const b=S.books.find(x=>x.title===bt)||addBook(bt);
+      const ct=(it.newChapterTitle||'未分類').trim();c=chaptersOf(b).find(x=>x.title===ct)||addChapter(b,ct,'');
+    }
+    let s=c.sections.find(x=>x.id===it.sectionId);
+    if(!s){const h=(it.newHeading||'新文獻補充').trim();s=c.sections.find(x=>x.heading===h)||addSection(c,h,'',true);}
+    s.md=insertLines(s.md,tagLines(it.text,src.id,it.relation),it.anchor);
+    c.rev=Date.now();it.placed=c.id;
+  }
+  q.applied=true;q.srcId=src.id;save();
+  toast('已把 '+items.length+' 項加入筆記');
+}
+function removeSource(id){
+  for(const c of S.chapters){let hit=false;for(const s of c.sections){const kept=s.md.split('\n').filter(l=>!l.includes('[^'+id+']'));if(kept.length!==s.md.split('\n').length){s.md=kept.join('\n').replace(/\n{3,}/g,'\n\n').trim();hit=true;}}if(hit){c.sections=c.sections.filter(s=>s.md.trim());c.rev=Date.now();}}
+  const ub=S.books.find(b=>b.title==='期刊新知（未歸類）');
+  if(ub){S.chapters=S.chapters.filter(c=>c.bookId!==ub.id||c.sections.length);if(!chaptersOf(ub).length)S.books=S.books.filter(b=>b!==ub);}
+  S.sources=S.sources.filter(s=>s.id!==id);save();
+}
+
+/* ========== 考試筆記 ========== */
+function newExam(name){const e={id:'E'+(++S.seq.e),name:name||'新的考試',scope:PRESETS[name]||'',formats:{key:true,table:true,pitfall:true,oral:false,mcq:false},level:'standard',chapterIds:allChapters().map(c=>c.id),notes:{}};S.exams.push(e);return e;}
+const getExam=()=>S.exams.find(e=>e.id===UI.examId);
+const examState=(e,c)=>{const n=e.notes[c.id];return !n?'未產生':n.rev!==c.rev?'母本已更新，需重新產生':'已產生';};
+async function genExam(all,signal){
+  const e=getExam();readExamForm();
+  if(!Object.values(e.formats).some(Boolean)){toast('至少勾選一種筆記型式');return;}
+  const list=e.chapterIds.map(getCh).filter(Boolean).filter(c=>c.sections.length&&(all||examState(e,c)!=='已產生'));
+  if(!list.length){toast(e.chapterIds.length?'所有章節都已是最新':'先勾選要納入的章節');return;}
+  let k=0;
+  for(const c of list){
+    const label='產生「'+e.name+'」筆記：'+c.title+'（'+(++k)+' / '+list.length+'）';setStatus(label);const t0=Date.now();
+    const r=await gemini({parts:[{text:'【母本筆記】\n'+chapterMd(c)},{text:examPrompt(e,bookTitle(c),c.title)}],system:SYS,signal,onText:t=>setStatus(label+'：已寫 '+t.length+' 字，'+Math.round((Date.now()-t0)/1000)+' 秒')});
+    e.notes[c.id]={md:cleanMd(r.text),rev:c.rev,at:today()};save();
+    if(UI.tab==='exam')renderExam();
+  }
+  toast('考試筆記已產生');
+}
+const examChapters=e=>allChapters().filter(c=>e.chapterIds.includes(c.id)&&e.notes[c.id]&&!/^（本章不在此考試範圍內）/.test(e.notes[c.id].md.trim()));
+
+/* ========== 匯出 ========== */
+function usedSources(text){const ids=[...new Set((text.match(/\[\^S\d+\]/g)||[]).map(x=>x.slice(2,-1)))];return ids.map(getSrc).filter(Boolean);}
+const srcLine=s=>[s.authors,s.title,[s.journal,s.year].filter(Boolean).join(' '),s.doi].filter(Boolean).join('. ');
+function masterMd(){
+  let out='';
+  for(const b of S.books)for(const c of chaptersOf(b))out+='# 《'+b.title+'》'+c.title+'\n\n'+chapterMd(c)+'\n\n';
+  return out+usedSources(out).map(s=>'[^'+s.id+']: '+srcLine(s)).join('\n')+'\n';
+}
+function examMd(e){
+  let out='# '+e.name+'\n\n';
+  for(const c of examChapters(e))out+='# 《'+bookTitle(c)+'》'+c.title+'\n\n'+e.notes[c.id].md+'\n\n';
+  return out+usedSources(out).map(s=>'[^'+s.id+']: '+srcLine(s)).join('\n')+'\n';
+}
+function refsHtml(text){const u=usedSources(text);return u.length?'<h3>新文獻出處</h3><ol class="refs">'+u.map(s=>'<li id="src-'+s.id+'"><strong>'+esc(s.short)+'</strong><br>'+esc(srcLine(s))+(s.limitations?'<br><span class="src">限制：'+esc(s.limitations)+'</span>':'')+'</li>').join('')+'</ol>':'';}
+function chapterHtml(c){return '<p class="src">《'+esc(bookTitle(c))+'》'+(c.pages?'，第 '+esc(c.pages)+' '+(c.unit||'頁'):'')+'</p><h2 id="'+c.id+'">'+esc(c.title)+'</h2>'+c.sections.map(s=>'<h3>'+lineMd(s.heading)+'</h3>'+mdRender(s.md)).join('');}
+function offlineHtml(title,bodyHtml,toc){
+  return '<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(title)+'</title><style>'+$('#noteCss').textContent+'body{margin:0;background:#fff}.wrap{max-width:52rem;margin:0 auto;padding:1.5rem 1.2rem 4rem}.toc{font-size:.95rem;border-bottom:1px solid var(--line);padding-bottom:1rem;margin-bottom:2.5rem}.doc h2{margin-top:.2rem}.doc p.src{margin-top:3rem}.doc h2+p.src,.doc li p.src{margin-top:0}@media print{.doc{font-size:10.5pt;line-height:1.6}}</style></head><body><div class="wrap doc"><h2 style="margin-top:0">'+esc(title)+'</h2><p class="src">匯出日期 '+today()+'。黃色劃線的行是新文獻補充，行尾是出處。</p>'+(toc?'<div class="toc">'+toc+'</div>':'')+bodyHtml+'</div></body></html>';
+}
+function exportMaster(kind){
+  if(!S.chapters.length){toast('還沒有筆記可以匯出');return;}
+  if(kind==='md')return download('婦癌唸書筆記_'+today()+'.md',masterMd(),'text/markdown');
+  const chs=allChapters();const body=chs.map(chapterHtml).join('')+refsHtml(masterMd());
+  const toc='<ol>'+chs.map(c=>'<li><a href="#'+c.id+'">'+esc(c.title)+'</a></li>').join('')+'</ol>';
+  download('婦癌唸書筆記_'+today()+'.html',offlineHtml('婦癌唸書筆記',body,toc),'text/html');
+}
+function exportExam(kind){
+  const e=getExam();const chs=examChapters(e);
+  if(!chs.length){toast('這場考試還沒有產生筆記');return;}
+  if(kind==='md')return download(fileSafe(e.name)+'_'+today()+'.md',examMd(e),'text/markdown');
+  const body=chs.map(c=>'<p class="src">《'+esc(bookTitle(c))+'》</p><h2 id="'+c.id+'">'+esc(c.title)+'</h2>'+mdRender(e.notes[c.id].md)).join('')+refsHtml(examMd(e));
+  const toc='<ol>'+chs.map(c=>'<li><a href="#'+c.id+'">'+esc(c.title)+'</a></li>').join('')+'</ol>';
+  download(fileSafe(e.name)+'_'+today()+'.html',offlineHtml(e.name,body,toc),'text/html');
+}
+
+/* ========== 畫面 ========== */
+function go(tab){UI.tab=tab;$$('#tabs button').forEach(b=>b.dataset.tab===tab?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'));({notes:renderNotes,book:renderBook,lit:renderLit,exam:renderExam,set:renderSet})[tab]();window.scrollTo(0,0);}
+
+function renderNotes(){
+  if(!S.chapters.length){
+    $('#main').innerHTML='<div class="paper narrow"><h2 class="vt">還沒有筆記</h2><p class="lead">先丟一本電子書進來，分章整理成筆記；之後每讀到一篇新文獻，就把 PDF 丟進來，新的內容會比對既有筆記，加在對應的章節裡。</p><div class="row"><button class="btn pri" data-act="tab" data-tab="book">匯入電子書</button><button class="btn" data-act="tab" data-tab="lit">直接加入一篇文獻</button><button class="btn" data-act="addChapter">自己新增一章</button></div></div>';return;
+  }
+  if(!getCh(UI.chapterId))UI.chapterId=allChapters()[0]?.id;
+  $('#main').innerHTML='<div class="notes"><aside class="side"><input type="search" id="q" placeholder="搜尋筆記內容" value="'+esc(UI.q)+'" aria-label="搜尋筆記內容"><p style="margin:.6rem 0 0"><label class="chk small"><input type="checkbox" id="onlyNew"'+(UI.onlyNew?' checked':'')+'> 只看新文獻補充</label></p><div id="tree"></div><p class="small" style="margin-top:1.4rem"><button class="link" data-act="addChapter">新增章節</button>　<button class="link" data-act="exportMaster" data-kind="html">匯出離線 HTML</button>　<button class="link" data-act="exportMaster" data-kind="md">匯出 Markdown</button></p></aside><article class="paper doc" id="pane"></article></div>';
+  renderTree();renderPane();
+}
+function renderTree(){
+  const q=UI.q.trim().toLowerCase();let html='';
+  for(const b of S.books){
+    const chs=chaptersOf(b).filter(c=>!q||(c.title+'\n'+chapterMd(c)).toLowerCase().includes(q));
+    if(q&&!chs.length)continue;
+    html+='<div class="bk"><div class="bk-t"><span>'+esc(b.title)+'</span><button class="link small" data-act="bookMenu" data-id="'+b.id+'" aria-label="管理這本書">管理</button></div><ul>'+chs.map(c=>{const n=newCount(c);return '<li><button data-act="openCh" data-id="'+c.id+'"'+(c.id===UI.chapterId?' aria-current="true"':'')+'><span>'+esc(c.title)+'</span>'+(n?'<span class="cnt" title="新文獻補充的行數">+'+n+'</span>':'')+'</button></li>';}).join('')+'</ul></div>';
+  }
+  $('#tree').innerHTML=html||'<p class="muted small">沒有符合「'+esc(UI.q)+'」的章節</p>';
+}
+function renderPane(){
+  const c=getCh(UI.chapterId),pane=$('#pane');if(!c){pane.innerHTML='';return;}
+  let h='<p class="src">《'+esc(bookTitle(c))+'》'+(c.pages?'，第 '+esc(c.pages)+' '+(c.unit||'頁'):'')+'</p><h2>'+esc(c.title)+'</h2><div class="ch-tools"><button class="link" data-act="addSection">新增小節</button><button class="link" data-act="renameCh">重新命名</button><button class="link" data-act="print">列印這一章</button><button class="link danger" data-act="delCh">刪除這一章</button></div>';
+  let shown=0;
+  for(const s of c.sections){
+    if(UI.editSec===s.id){h+='<section class="sec sec-edit" data-sec="'+s.id+'"><h3><span>編輯小節</span></h3><input type="text" id="edH" value="'+esc(s.heading)+'" aria-label="小節標題"><textarea id="edM" aria-label="小節內容（Markdown）">'+esc(s.md)+'</textarea><p class="row small"><button class="btn pri" data-act="saveSec">儲存小節</button><button class="btn" data-act="cancelSec">取消</button><button class="link danger" data-act="delSec">刪除這個小節</button><span class="muted">行尾的 [^S1] 是文獻出處標記，保留它就會維持黃色劃線。</span></p></section>';shown++;continue;}
+    let md=s.md;
+    if(UI.onlyNew){md=md.split('\n').filter(l=>/\[\^S\d+\]/.test(l)).map(l=>l.replace(/^\s+/,'')).join('\n');if(!md)continue;}
+    shown++;
+    h+='<section class="sec" data-sec="'+s.id+'"><h3><span>'+lineMd(s.heading)+'</span><button class="link" data-act="editSec" data-id="'+s.id+'">編輯</button></h3>'+mdRender(md)+'</section>';
+  }
+  if(!shown)h+='<p class="muted" style="margin-top:2rem">'+(UI.onlyNew?'這一章還沒有新文獻補充。':'這一章還沒有內容，按「新增小節」開始寫。')+'</p>';
+  pane.innerHTML=h;
+  const q=UI.q.trim();if(q){const lq=q.toLowerCase();const w=document.createTreeWalker(pane,NodeFilter.SHOW_TEXT);const ns=[];while(w.nextNode())ns.push(w.currentNode);for(const n of ns){const i=n.nodeValue.toLowerCase().indexOf(lq);if(i<0||n.parentNode.closest('textarea,button,input'))continue;const r=document.createRange();r.setStart(n,i);r.setEnd(n,i+q.length);const m=document.createElement('mark');m.className='q';try{r.surroundContents(m);}catch(e){}}}
+}
+
+function renderBook(){
+  let h='<div class="paper narrow"><h2 class="vt">匯入電子書</h2><p class="lead">把書丟進來，先確認章節怎麼切，再一章一章整理成筆記。書本身只在這台裝置的瀏覽器裡讀取；送到 Gemini 的是每一章的內容。</p>';
+  h+='<div class="drop" id="dropBook" data-act="pickBook" tabindex="0" role="button">把電子書拖到這裡，或點一下選檔<br><span class="small">PDF、EPUB、TXT</span></div>';
+  if(BK){
+    const bk=BK;
+    h+='<h3 class="st">'+esc(bk.name)+'</h3><p class="small muted">共 '+bk.n+' '+bk.unit+(bk.outline.length?'，書籤 '+bk.outline.length+' 項':'，沒有書籤')+(bk.scanned?'。這份 PDF 沒有文字層（掃描檔），已改成直接傳送原始頁面。':'')+'</p>';
+    h+='<label class="f" for="bkTitle">書名</label><input type="text" id="bkTitle" value="'+esc(bk.title)+'">';
+    h+='<h3 class="st">章節範圍</h3><p class="row small">'+(bk.outline.length?'<button class="btn" data-act="useOutline" data-level="0">用書籤第 1 層</button>'+(bk.maxLevel>=1?'<button class="btn" data-act="useOutline" data-level="1">用書籤第 2 層</button>':''):'')+'<button class="btn" data-act="detect">請 Gemini 判斷章節</button><button class="btn" data-act="addRow">手動加一列</button><button class="link" data-act="toggleRows">全選／全不選</button></p>';
+    if(bk.rows.length){h+='<div style="overflow-x:auto"><table class="grid" id="rows"><thead><tr><th></th><th>章名</th><th>起（'+bk.unit+'）</th><th>迄</th><th>狀態</th></tr></thead><tbody>'+bk.rows.map((r,i)=>'<tr data-i="'+i+'"><td><input type="checkbox" class="r-on"'+(r.on?' checked':'')+' aria-label="整理這一章"></td><td><input type="text" class="r-title" value="'+esc(r.title)+'" aria-label="章名"></td><td><input type="number" class="r-s" min="1" max="'+bk.n+'" value="'+r.start+'" aria-label="起"></td><td><input type="number" class="r-e" min="1" max="'+bk.n+'" value="'+r.end+'" aria-label="迄"></td><td class="r-st small '+(r.err?'st-err':r.ok?'st-ok':'')+'">'+esc(r.status)+'</td></tr>').join('')+'</tbody></table></div>';}
+    else h+='<p class="muted">這本書沒有可用的書籤。按「請 Gemini 判斷章節」，或手動填入章名與範圍。</p>';
+    h+='<h3 class="st">整理方式</h3>';
+    if(bk.kind==='pdf')h+='<p class="row"><label class="chk"><input type="radio" name="bkMode" value="text"'+(bk.mode==='text'?' checked':'')+(bk.scanned?' disabled':'')+'> 只送文字（快、省費用）</label><label class="chk"><input type="radio" name="bkMode" value="pdf"'+(bk.mode==='pdf'?' checked':'')+'> 送原始頁面（讀得到圖、流程圖與表格版面）</label></p>';
+    h+='<p class="row"><label for="bkLevel">詳略度</label><select id="bkLevel">'+Object.entries(LEVELS).map(([k,v])=>'<option value="'+k+'"'+(k===CFG.level?' selected':'')+'>'+v.name+'</option>').join('')+'</select><button class="btn pri" data-act="summarize">整理勾選的章節</button></p>';
+  }
+  $('#main').innerHTML=h+'</div>';
+}
+function readRows(){if(!BK)return;const t=$('#bkTitle');if(t&&t.value.trim())BK.title=t.value.trim();const m=$('input[name=bkMode]:checked');if(m)BK.mode=m.value;$$('#rows tbody tr').forEach(tr=>{const r=BK.rows[+tr.dataset.i];if(!r)return;r.on=$('.r-on',tr).checked;r.title=$('.r-title',tr).value.trim();r.start=Math.max(1,Math.min(BK.n,parseInt($('.r-s',tr).value)||1));r.end=Math.max(r.start,Math.min(BK.n,parseInt($('.r-e',tr).value)||r.start));});}
+function paintRow(r){const tr=$('#rows tr[data-i="'+BK.rows.indexOf(r)+'"]');if(!tr)return;const td=$('.r-st',tr);td.textContent=r.status;td.className='r-st small '+(r.err?'st-err':r.ok?'st-ok':'');}
+
+function renderLit(){
+  let h='<div class="paper narrow"><h2 class="vt">加入新文獻</h2><p class="lead">丟進期刊論文、guideline 更新或會議摘要。內容會和既有筆記逐章比對，列出每一點該加在哪裡；你確認之後才會寫進筆記。</p>';
+  h+='<div class="drop" id="dropLit" data-act="pickLit" tabindex="0" role="button">把文獻 PDF 拖到這裡，或點一下選檔（可一次多篇）<br><span class="small">PDF、圖片、TXT</span></div>';
+  h+='<label class="f" for="litText">或貼上文字（摘要、全文段落）</label><textarea id="litText" rows="4" placeholder="貼上 abstract 或內文"></textarea><p><button class="btn" data-act="addText">加入這段文字</button></p>';
+  h+='<div id="litList"></div>';
+  h+='<h3 class="st">已加入筆記的文獻</h3>';
+  h+=S.sources.length?'<table class="grid"><thead><tr><th>出處</th><th>加入日期</th><th>行數</th><th></th></tr></thead><tbody>'+S.sources.slice().reverse().map(s=>'<tr><td><button class="link" data-act="showSrc" data-id="'+s.id+'">'+esc(s.short)+'</button><br><span class="small muted">'+esc(s.title)+'</span></td><td class="small">'+esc(s.addedAt)+'</td><td class="small">'+S.chapters.reduce((n,c)=>n+c.sections.reduce((m,x)=>m+x.md.split('[^'+s.id+']').length-1,0),0)+'</td><td><button class="link danger small" data-act="delSrc" data-id="'+s.id+'">從筆記移除</button></td></tr>').join('')+'</tbody></table>':'<p class="muted">還沒有。</p>';
+  $('#main').innerHTML=h+'</div>';paintLit();
+}
+const REL={new:'新增',update:'更新原筆記',conflict:'與原筆記不同',covered:'筆記已涵蓋'};
+function locSelects(q,i,it){
+  const chs=allChapters();
+  let h='<select data-lit="'+q.id+'" data-i="'+i+'" class="lit-ch" aria-label="加入的章節"><option value="">新章節：'+esc(it.newChapterTitle||'未分類')+'</option>'+chs.map(c=>'<option value="'+c.id+'"'+(c.id===it.chapterId?' selected':'')+'>'+esc(c.title)+'</option>').join('')+'</select> ';
+  const c=getCh(it.chapterId);
+  h+='<select data-lit="'+q.id+'" data-i="'+i+'" class="lit-sec" aria-label="加入的小節"><option value="">新小節：'+esc(it.newHeading||'新文獻補充')+'</option>'+(c?c.sections.map(s=>'<option value="'+s.id+'"'+(s.id===it.sectionId?' selected':'')+'>'+esc(s.heading)+'</option>').join(''):'')+'</select>';
+  return h;
+}
+function paintLit(){
+  const box=$('#litList');if(!box)return;let h='';
+  if(LIT.queue.some(q=>q.status==='wait'))h+='<p style="margin-top:1.2rem"><button class="btn pri" data-act="runLit">比對 '+LIT.queue.filter(q=>q.status==='wait').length+' 篇文獻</button></p>';
+  for(const q of LIT.queue){
+    h+='<div class="paper-res" data-q="'+q.id+'">';
+    if(q.status==='wait')h+='<h4>'+esc(q.name)+'</h4><p class="small muted">等待比對　<button class="link danger" data-act="dropQ" data-id="'+q.id+'">移除</button></p>';
+    else if(q.status==='run')h+='<h4>'+esc(q.name)+'</h4><p class="small muted">比對中…</p>';
+    else if(q.status==='err')h+='<h4>'+esc(q.name)+'</h4><p class="small" style="color:var(--danger)">'+esc(q.error)+'　<button class="link" data-act="retryQ" data-id="'+q.id+'">重試</button>　<button class="link danger" data-act="dropQ" data-id="'+q.id+'">移除</button></p>';
+    else{
+      const r=q.result,c=r.citation;
+      h+='<h4>'+esc(c.title||q.name)+'</h4><p class="small muted">'+esc([c.authors,[c.journal,c.year].filter(Boolean).join(' '),c.design].filter(Boolean).join('；'))+'</p><p>'+esc(r.summary)+'</p>'+(r.limitations?'<p class="small"><strong>限制：</strong>'+esc(r.limitations)+'</p>':'');
+      if(q.applied)h+='<p><strong>已加入筆記</strong>（出處標記 '+esc(c.short)+'）。'+(UNDO&&UNDO.qid===q.id?'<button class="link" data-act="undoLit">復原這次加入</button>　':'')+'<button class="link" data-act="openCh" data-id="'+esc(r.items.find(x=>x.placed)?.placed||'')+'">到筆記查看</button></p>';
+      else{
+        h+='<label class="f" for="cs'+q.id+'">筆記裡顯示的短出處</label><input type="text" id="cs'+q.id+'" class="lit-short" data-lit="'+q.id+'" value="'+esc(c.short)+'" style="max-width:24rem">';
+        if(!r.items.length)h+='<p class="muted">這篇沒有需要寫進筆記的新內容。</p>';
+        r.items.forEach((it,i)=>{h+='<div class="item"><input type="checkbox" class="lit-on" data-lit="'+q.id+'" data-i="'+i+'"'+(it.on?' checked':'')+' aria-label="加入這一項"><div><span class="rel '+it.relation+'">'+REL[it.relation]+'</span>'+locSelects(q,i,it)+'<p class="small muted" style="margin:.3rem 0 0">'+esc(it.reason)+(it.anchor?'　插在「'+esc(it.anchor.slice(0,50))+(it.anchor.length>50?'…':'')+'」之後':'')+'</p><textarea class="lit-text" data-lit="'+q.id+'" data-i="'+i+'" aria-label="要寫進筆記的內容">'+esc(it.text)+'</textarea></div></div>';});
+        h+='<p class="row" style="margin-top:.8rem"><button class="btn pri" data-act="applyQ" data-id="'+q.id+'">把勾選的項目加入筆記</button><button class="link danger" data-act="dropQ" data-id="'+q.id+'">不加入，移除這篇</button></p>';
+      }
+    }
+    h+='</div>';
+  }
+  box.innerHTML=h;
+}
+
+function renderExam(){
+  let h='<div class="paper narrow"><h2 class="vt">考試筆記</h2><p class="lead">同一份母本筆記，依不同考試的範圍與深度，另外產生一份對應的筆記。母本之後加了新文獻，這裡會標出哪些章節需要重新產生。</p>';
+  if(!S.chapters.length){$('#main').innerHTML=h+'<p class="muted">還沒有母本筆記。先匯入電子書或加入文獻。</p></div>';return;}
+  if(!getExam())UI.examId=S.exams[0]?.id||null;
+  h+='<p class="row">'+(S.exams.length?'<label for="exSel">考試</label><select id="exSel">'+S.exams.map(e=>'<option value="'+e.id+'"'+(e.id===UI.examId?' selected':'')+'>'+esc(e.name)+'</option>').join('')+'</select>':'')+'<label for="exNew" class="'+(S.exams.length?'muted small':'')+'">新增一場考試</label><select id="exNew"><option value="">選擇範本…</option>'+Object.keys(PRESETS).map(k=>'<option>'+esc(k)+'</option>').join('')+'<option value="__blank">空白（自己填範圍）</option></select></p>';
+  const e=getExam();
+  if(e){
+    h+='<h3 class="st">範圍設定</h3><label class="f" for="exName">考試名稱</label><input type="text" id="exName" value="'+esc(e.name)+'"><label class="f" for="exScope">考試範圍與要求</label><textarea id="exScope" rows="5" placeholder="把正式的考試範圍、簡章或自己的要求貼在這裡">'+esc(e.scope)+'</textarea><p class="small muted">範本文字只是起點，請依實際簡章修改。</p>';
+    h+='<p class="row" style="margin-top:.8rem"><span style="font-weight:600">筆記型式</span>'+Object.entries(FORMATS).map(([k,v])=>'<label class="chk"><input type="checkbox" class="ex-f" value="'+k+'"'+(e.formats[k]?' checked':'')+'> '+v.name+'</label>').join('')+'</p>';
+    h+='<p class="row"><label for="exLevel">詳略度</label><select id="exLevel">'+Object.entries(LEVELS).map(([k,v])=>'<option value="'+k+'"'+(k===(e.level||'standard')?' selected':'')+'>'+v.name+'</option>').join('')+'</select></p>';
+    h+='<h3 class="st">納入的章節</h3><div style="overflow-x:auto"><table class="grid"><thead><tr><th></th><th>章節</th><th>狀態</th></tr></thead><tbody>';
+    for(const b of S.books)for(const c of chaptersOf(b)){const st=examState(e,c),inc=e.chapterIds.includes(c.id);h+='<tr><td><input type="checkbox" class="ex-c" value="'+c.id+'"'+(inc?' checked':'')+' aria-label="納入這一章"></td><td>'+esc(c.title)+'<br><span class="small muted">'+esc(b.title)+'</span></td><td class="small '+(st==='已產生'?'st-ok':st==='未產生'?'muted':'st-err')+'">'+(inc?st:'')+'</td></tr>';}
+    h+='</tbody></table></div><p class="row" style="margin-top:1rem"><button class="btn pri" data-act="genExam">產生尚未完成與需更新的章節</button><button class="btn" data-act="genExamAll">全部重新產生</button><button class="link danger" data-act="delExam">刪除這場考試</button></p>';
+    const chs=examChapters(e);
+    if(chs.length){
+      h+='<h3 class="st">'+esc(e.name)+'</h3><p class="row small noprint"><button class="link" data-act="exportExam" data-kind="html">匯出離線 HTML</button><button class="link" data-act="exportExam" data-kind="md">匯出 Markdown</button><button class="link" data-act="print">列印</button></p><div class="doc">'+chs.map(c=>'<p class="src" style="margin-top:2.5rem">《'+esc(bookTitle(c))+'》'+(e.notes[c.id].rev!==c.rev?'　母本已更新，這份是舊版':'')+'</p><h2>'+esc(c.title)+'</h2>'+mdRender(e.notes[c.id].md)).join('')+'</div>';
+    }
+  }
+  $('#main').innerHTML=h+'</div>';
+}
+function readExamForm(){const e=getExam();if(!e||!$('#exName'))return;e.name=$('#exName').value.trim()||e.name;e.scope=$('#exScope').value;e.level=$('#exLevel').value;$$('.ex-f').forEach(x=>e.formats[x.value]=x.checked);e.chapterIds=$$('.ex-c').filter(x=>x.checked).map(x=>x.value);save();}
+
+function renderSet(){
+  const kb=Math.round(JSON.stringify(S).length/1024);
+  $('#main').innerHTML='<div class="paper narrow"><h2 class="vt">設定</h2><p class="lead">API key 只存在這台裝置的瀏覽器裡，請求直接送到 Google，不會寫進 GitHub 上的檔案。</p>'
+  +'<label class="f" for="cfKey">Gemini API key</label><input type="password" id="cfKey" value="'+esc(CFG.apiKey)+'" autocomplete="off" placeholder="AIza…"><p class="small muted">到 Google AI Studio（aistudio.google.com/apikey）建立。Gemini 3.1 Pro 需要已開啟計費的專案。</p>'
+  +'<label class="f" for="cfModel">模型</label><input type="text" id="cfModel" list="models" value="'+esc(CFG.model)+'" style="max-width:24rem"><datalist id="models"><option value="gemini-3.1-pro-preview"><option value="gemini-pro-latest"></datalist><p class="small muted">Gemini 3.1 Pro 在 API 上的代號是 gemini-3.1-pro-preview。找不到模型時會依序改試 '+FALLBACK.join('、')+'。</p>'
+  +'<p class="row"><label for="cfThink">思考深度</label><select id="cfThink">'+[['low','低（快）'],['medium','中'],['high','高（預設）']].map(([k,v])=>'<option value="'+k+'"'+(k===CFG.thinking?' selected':'')+'>'+v+'</option>').join('')+'</select><label for="cfLevel">預設詳略度</label><select id="cfLevel">'+Object.entries(LEVELS).map(([k,v])=>'<option value="'+k+'"'+(k===CFG.level?' selected':'')+'>'+v.name+'</option>').join('')+'</select></p>'
+  +'<p class="row"><button class="btn pri" data-act="saveCfg">儲存設定</button><button class="btn" data-act="testKey">測試連線</button><button class="btn" data-act="listModels">列出可用模型</button></p><p id="cfOut" class="small"></p>'
+  +'<h3 class="st">備份與搬移</h3><p class="lead">筆記存在這個瀏覽器裡（目前約 '+kb+' KB，'+S.chapters.length+' 章、'+S.sources.length+' 篇文獻）。換電腦、換瀏覽器或清除瀏覽資料前，先下載備份。</p><p class="row"><button class="btn" data-act="backup">下載備份檔</button><button class="btn" data-act="restore">從備份檔還原</button><button class="link danger" data-act="wipe">清除這台裝置上的所有筆記</button></p>'
+  +(USAGE.in||USAGE.out?'<h3 class="st">這次開啟以來的用量</h3><p class="small">模型 '+esc(USAGE.model)+'；輸入約 '+USAGE.in.toLocaleString()+' tokens，輸出約 '+USAGE.out.toLocaleString()+' tokens。</p>':'')
+  +'</div>';
+}
+
+/* ========== 互動 ========== */
+function showSrc(id){
+  const s=getSrc(id);if(!s)return;const d=$('#dlg');
+  d.innerHTML='<h3>'+esc(s.short)+'</h3><p>'+esc(srcLine(s))+'</p>'+(s.design?'<p class="small"><strong>設計：</strong>'+esc(s.design)+'</p>':'')+'<p>'+esc(s.summary)+'</p>'+(s.limitations?'<p class="small"><strong>限制：</strong>'+esc(s.limitations)+'</p>':'')+'<p class="small muted">'+esc(s.addedAt)+' 加入，來源檔 '+esc(s.file)+'</p><p class="row"><button class="btn pri" data-act="closeDlg">關閉</button></p>';
+  d.showModal();
+}
+function pick(accept,multiple,cb){const f=$('#filePick');f.value='';f.accept=accept;f.multiple=multiple;f.onchange=()=>{if(f.files.length)cb([...f.files]);};f.click();}
+async function loadBookFile(file){try{BK=await openBook(file);}catch(e){console.error(e);toast(e.message,7000);}finally{setStatus('');}if(UI.tab==='book')renderBook();}
+function addLitFiles(files){for(const f of files){if(!/\.(pdf|png|jpe?g|webp|txt|md)$/i.test(f.name)){toast('「'+f.name+'」不是支援的格式（PDF、圖片、TXT）');continue;}if(/\.(txt|md)$/i.test(f.name)){f.text().then(t=>{LIT.queue.push({id:++LIT.seq,name:f.name,text:t,status:'wait'});paintLit();});continue;}LIT.queue.push({id:++LIT.seq,name:f.name,file:f,status:'wait'});}paintLit();}
+const getQ=id=>LIT.queue.find(q=>q.id===+id);
+const ACT={
+  tab:b=>go(b.dataset.tab),
+  stop:()=>JOB.ctrl?.abort(),
+  closeDlg:()=>$('#dlg').close(),
+  openCh:b=>{if(!getCh(b.dataset.id))return;UI.chapterId=b.dataset.id;UI.editSec=null;if(UI.tab!=='notes')go('notes');else{renderTree();renderPane();window.scrollTo(0,0);}},
+  addChapter:()=>{const t=prompt('章節名稱');if(!t||!t.trim())return;const bt='自訂筆記';const b=S.books.find(x=>x.title===bt)||addBook(bt);const c=addChapter(b,t.trim(),'');UI.chapterId=c.id;save();go('notes');},
+  bookMenu:b=>{const bk=getBook(b.dataset.id),d=$('#dlg');d.innerHTML='<h3>管理這本書</h3><label class="f" for="bkRename">書名</label><input type="text" id="bkRename" value="'+esc(bk.title)+'"><p class="row" style="margin-top:1rem"><button class="btn pri" data-act="renameBook" data-id="'+bk.id+'">儲存書名</button><button class="btn" data-act="closeDlg">取消</button><button class="link danger" data-act="delBook" data-id="'+bk.id+'">刪除整本書的筆記</button></p>';d.showModal();},
+  renameBook:b=>{const v=$('#bkRename').value.trim();if(v){getBook(b.dataset.id).title=v;save();}$('#dlg').close();renderNotes();},
+  delBook:b=>{const bk=getBook(b.dataset.id);if(!confirm('刪除《'+bk.title+'》的全部 '+chaptersOf(bk).length+' 章筆記？這個動作無法復原。'))return;S.chapters=S.chapters.filter(c=>c.bookId!==bk.id);S.books=S.books.filter(x=>x.id!==bk.id);save();$('#dlg').close();renderNotes();},
+  renameCh:()=>{const c=getCh(UI.chapterId);const t=prompt('章節名稱',c.title);if(t&&t.trim()){c.title=t.trim();save();renderTree();renderPane();}},
+  delCh:()=>{const c=getCh(UI.chapterId);if(!confirm('刪除「'+c.title+'」這一章的筆記？這個動作無法復原。'))return;S.chapters=S.chapters.filter(x=>x.id!==c.id);if(!chaptersOf(getBook(c.bookId)).length)S.books=S.books.filter(b=>b.id!==c.bookId);UI.chapterId=null;save();renderNotes();},
+  addSection:()=>{const c=getCh(UI.chapterId);const s=addSection(c,'新的小節','',true);c.rev=Date.now();UI.editSec=s.id;save();renderPane();$('#edH')?.select();},
+  editSec:b=>{UI.editSec=b.dataset.id;renderPane();$('#edM')?.focus();},
+  cancelSec:()=>{UI.editSec=null;renderPane();},
+  saveSec:()=>{const c=getCh(UI.chapterId),s=c.sections.find(x=>x.id===UI.editSec);s.heading=$('#edH').value.trim()||s.heading;s.md=$('#edM').value.replace(/\s+$/,'');c.rev=Date.now();UI.editSec=null;save();renderTree();renderPane();toast('小節已儲存');},
+  delSec:()=>{const c=getCh(UI.chapterId);if(!confirm('刪除這個小節？'))return;c.sections=c.sections.filter(x=>x.id!==UI.editSec);c.rev=Date.now();UI.editSec=null;save();renderTree();renderPane();},
+  print:()=>window.print(),
+  exportMaster:b=>exportMaster(b.dataset.kind),
+  exportExam:b=>{readExamForm();exportExam(b.dataset.kind);},
+  pickBook:()=>pick('.pdf,.epub,.txt,.md',false,fs=>loadBookFile(fs[0])),
+  useOutline:b=>{readRows();rowsFromOutline(BK,+b.dataset.level);renderBook();},
+  addRow:()=>{readRows();const last=BK.rows[BK.rows.length-1];BK.rows.push({on:true,title:'',start:last?Math.min(BK.n,last.end+1):1,end:BK.n,status:''});renderBook();},
+  toggleRows:()=>{readRows();const all=BK.rows.every(r=>r.on);BK.rows.forEach(r=>r.on=!all);renderBook();},
+  detect:()=>{readRows();runJob(async sig=>{await detectChapters(sig);renderBook();toast('已判斷出 '+BK.rows.length+' 章，請檢查範圍');});},
+  summarize:()=>{CFG.level=$('#bkLevel').value;saveCfg();runJob(summarizeBook);},
+  pickLit:()=>pick('.pdf,.png,.jpg,.jpeg,.webp,.txt,.md',true,addLitFiles),
+  addText:()=>{const t=$('#litText').value.trim();if(t.length<40){toast('貼上的文字太短');return;}LIT.queue.push({id:++LIT.seq,name:'貼上的文字：'+t.slice(0,24).replace(/\s+/g,' ')+'…',text:t,status:'wait'});$('#litText').value='';paintLit();},
+  runLit:()=>runJob(async sig=>{for(const q of LIT.queue.filter(x=>x.status==='wait')){try{await analyzePaper(q,sig);}catch(e){if(e.name==='AbortError'){q.status='wait';paintLit();throw e;}q.status='err';q.error=e.message;}paintLit();}}),
+  retryQ:b=>{getQ(b.dataset.id).status='wait';ACT.runLit();},
+  dropQ:b=>{LIT.queue=LIT.queue.filter(q=>q.id!==+b.dataset.id);paintLit();},
+  applyQ:b=>{const q=getQ(b.dataset.id);applyPaper(q);renderLit();},
+  undoLit:()=>{if(!UNDO)return;S=JSON.parse(UNDO.state);const q=getQ(UNDO.qid);if(q){q.applied=false;q.srcId=null;q.result.items.forEach(i=>delete i.placed);}UNDO=null;save();renderLit();toast('已復原');},
+  showSrc:b=>showSrc(b.dataset.id),
+  delSrc:b=>{const s=getSrc(b.dataset.id);if(!confirm('把「'+s.short+'」加入的所有內容從筆記移除？'))return;removeSource(s.id);renderLit();toast('已從筆記移除');},
+  genExam:()=>runJob(sig=>genExam(false,sig)),
+  genExamAll:()=>runJob(sig=>genExam(true,sig)),
+  delExam:()=>{const e=getExam();if(!confirm('刪除「'+e.name+'」和它的筆記？'))return;S.exams=S.exams.filter(x=>x.id!==e.id);UI.examId=null;save();renderExam();},
+  saveCfg:()=>{CFG.apiKey=$('#cfKey').value.trim();CFG.model=$('#cfModel').value.trim()||'gemini-3.1-pro-preview';CFG.thinking=$('#cfThink').value;CFG.level=$('#cfLevel').value;OKMODEL=null;saveCfg();toast('設定已儲存');},
+  testKey:async()=>{ACT.saveCfg();const out=$('#cfOut');out.textContent='連線中…';try{const ctrl=new AbortController();const r=await gemini({parts:[{text:'只回覆兩個字：正常'}],thinking:'low',signal:ctrl.signal});out.textContent='連線正常。實際使用的模型：'+r.model;}catch(e){out.textContent=e.message;}},
+  listModels:async()=>{ACT.saveCfg();const out=$('#cfOut');out.textContent='查詢中…';try{const res=await fetch(API+'/models?pageSize=200',{headers:{'x-goog-api-key':CFG.apiKey}});if(!res.ok)throw new Error('查詢失敗 '+res.status+'：'+(await apiError(res)).slice(0,200));const j=await res.json();const names=(j.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes('generateContent')).map(m=>m.name.replace('models/','')).filter(n=>/gemini/.test(n)&&!/image|tts|audio|embedding|live/.test(n));$('#models').innerHTML=names.map(n=>'<option value="'+esc(n)+'">').join('');out.textContent=names.length?'這把 key 可用的模型：'+names.join('、'):'這把 key 沒有可用的 Gemini 模型';}catch(e){out.textContent=e.message;}},
+  backup:()=>download('婦癌唸書筆記_備份_'+today()+'.json',JSON.stringify({app:'gynonc-study-notes',v:1,state:S}),'application/json'),
+  restore:()=>pick('.json',false,async fs=>{try{const j=JSON.parse(await fs[0].text());const st=j.state||j;if(!Array.isArray(st.chapters)||!st.seq)throw new Error('x');if(S.chapters.length&&!confirm('還原會取代目前這台裝置上的筆記（'+S.chapters.length+' 章）。確定？'))return;S=Object.assign(blank(),st);UI.chapterId=null;UI.examId=null;save();toast('已還原 '+S.chapters.length+' 章筆記');go('notes');}catch(e){toast('這不是有效的備份檔');}}),
+  wipe:()=>{if(!confirm('清除這台裝置上的所有筆記、文獻與考試筆記？這個動作無法復原，建議先下載備份。'))return;S=blank();UI.chapterId=null;UI.examId=null;save();renderSet();toast('已清除');}
+};
+document.addEventListener('click',e=>{
+  const cite=e.target.closest('a.cite');if(cite){e.preventDefault();showSrc(cite.dataset.src);return;}
+  const b=e.target.closest('[data-act]');if(!b||b.disabled)return;
+  if(b.matches('.drop')&&e.target.closest('a,button:not(.drop)'))return;
+  ACT[b.dataset.act]?.(b,e);
+});
+document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('.drop')){e.preventDefault();e.target.click();}});
+document.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.id==='q'){UI.q=t.value;renderTree();renderPane();}
+  else if(t.matches('.lit-text')){getQ(t.dataset.lit).result.items[+t.dataset.i].text=t.value;}
+  else if(t.matches('.lit-short')){getQ(t.dataset.lit).result.citation.short=t.value;}
+});
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.id==='onlyNew'){UI.onlyNew=t.checked;renderPane();}
+  else if(t.matches('.lit-on')){getQ(t.dataset.lit).result.items[+t.dataset.i].on=t.checked;}
+  else if(t.matches('.lit-ch')){const it=getQ(t.dataset.lit).result.items[+t.dataset.i];it.chapterId=t.value;it.sectionId='';it.anchor='';paintLit();}
+  else if(t.matches('.lit-sec')){const it=getQ(t.dataset.lit).result.items[+t.dataset.i];it.sectionId=t.value;it.anchor='';}
+  else if(t.id==='exSel'){readExamForm();UI.examId=t.value;renderExam();}
+  else if(t.id==='exNew'&&t.value){readExamForm();const e2=newExam(t.value==='__blank'?'':t.value);UI.examId=e2.id;save();renderExam();}
+  else if(t.matches('#exName,#exScope,#exLevel,.ex-f,.ex-c')){readExamForm();}
+  else if(t.name==='bkMode'){BK.mode=t.value;}
+});
+for(const ev of ['dragenter','dragover'])document.addEventListener(ev,e=>{const d=e.target.closest?.('.drop');if(d){e.preventDefault();d.classList.add('over');}else if(e.dataTransfer?.types?.includes('Files'))e.preventDefault();});
+document.addEventListener('dragleave',e=>{e.target.closest?.('.drop')?.classList.remove('over');});
+document.addEventListener('drop',e=>{
+  if(!e.dataTransfer?.files?.length)return;e.preventDefault();
+  const d=e.target.closest?.('.drop');$$('.drop').forEach(x=>x.classList.remove('over'));
+  const files=[...e.dataTransfer.files];
+  if(d?.id==='dropBook')loadBookFile(files[0]);else if(d?.id==='dropLit')addLitFiles(files);else toast('請把檔案放進虛線框裡');
+});
+window.addEventListener('beforeunload',e=>{if(JOB.ctrl){e.preventDefault();e.returnValue='';}});
+
+(async function init(){
+  await DB.open();
+  const st=await DB.get('state');if(st&&Array.isArray(st.chapters))S=Object.assign(blank(),st);
+  go('notes');
+})();
+</script>
+</body>
+</html>
