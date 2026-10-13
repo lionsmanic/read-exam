@@ -43,6 +43,11 @@
 .doc .src{color:var(--muted);font-size:.9rem;margin:0}
 .doc .refs{font-size:.92rem}
 .doc .refs li{margin:.5rem 0}
+/* 原書圖表 */
+.doc figure.bookfig{margin:1.2rem 0;border:1px solid var(--line);background:#fff;padding:.6rem}
+.doc figure.bookfig img{display:block;max-width:100%;height:auto;margin:0 auto .4rem;cursor:zoom-in}
+.doc figure.bookfig figcaption{font-size:.86rem;line-height:1.5;color:var(--muted)}
+.doc figure.bookfig.missing{color:var(--muted);font-size:.88rem}
 /* 我的記號：綠＝劃重點，粉紅＝不熟，「註」＝有註記 */
 .doc mark.ann{background:#CDEBD8;color:inherit;padding:0 1px;cursor:pointer}
 .doc mark.ann.star{background:#F9D3DF;box-shadow:inset 0 -2px 0 #B0245A}
@@ -270,7 +275,7 @@ const DB={db:null,
   get(k){return new Promise(res=>{if(!this.db){try{res(JSON.parse(localStorage.getItem('gn_'+k)));}catch(e){res(null);}return;}const q=this.db.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>res(q.result??null);q.onerror=()=>res(null);});},
   set(k,v){return new Promise(res=>{if(!this.db){try{localStorage.setItem('gn_'+k,JSON.stringify(v));}catch(e){}res();return;}const tx=this.db.transaction('kv','readwrite');tx.objectStore('kv').put(v,k);tx.oncomplete=()=>res();tx.onerror=()=>res();});}
 };
-const blank=()=>({seq:{b:0,c:0,s:0,e:0},books:[],chapters:[],sources:[],exams:[],annos:[]});
+const blank=()=>({seq:{b:0,c:0,s:0,e:0},books:[],chapters:[],sources:[],exams:[],annos:[],figs:{}});
 let S=blank();
 let CFG={apiKey:'',model:'gemini-3.1-pro-preview',thinking:'high',level:'standard'};
 try{Object.assign(CFG,JSON.parse(localStorage.getItem('gn_cfg')||'{}'));}catch(e){}
@@ -318,6 +323,7 @@ function mdRender(src){
     if(!l.trim()){i++;continue;}
     if((m=l.match(/^(#{1,6})\s+(.*)$/))){const n=Math.min(6,Math.max(3,m[1].length+1));out+='<h'+n+'>'+lineMd(m[2])+'</h'+n+'>';i++;continue;}
     if(/^\s*(-{3,}|\*{3,})\s*$/.test(l)){out+='<hr>';i++;continue;}
+    if((m=l.match(/^\s*!\[([^\]]*)\]\(fig:([\w.-]+)\)\s*$/))){const f=(S.figs||{})[m[2]];out+=f&&f.src&&f.src.length?'<figure class="bookfig" data-fig="'+esc(m[2])+'">'+f.src.map((u,k)=>'<img src="'+esc(u)+'" alt="'+esc(m[1])+(f.src.length>1?'（'+(k+1)+'/'+f.src.length+'）':'')+'" loading="lazy">').join('')+'<figcaption>'+inlineMd(m[1])+'</figcaption></figure>':'<figure class="bookfig missing">［圖表未匯入：'+inlineMd(m[1])+'］</figure>';i++;continue;}
     if(isTableRow(l)&&i+1<L.length&&isTableSep(L[i+1])){
       out+='<div class="tw"><table><thead><tr>'+cells(l).map(c=>'<th>'+lineMd(c)+'</th>').join('')+'</tr></thead><tbody>';i+=2;
       while(i<L.length&&isTableRow(L[i])){out+='<tr>'+cells(L[i]).map(c=>'<td>'+lineMd(c)+'</td>').join('')+'</tr>';i++;}
@@ -1084,10 +1090,12 @@ const ACT={
   testKey:async()=>{ACT.saveCfg();const out=$('#cfOut');out.textContent='連線中…';try{const ctrl=new AbortController();const r=await gemini({parts:[{text:'只回覆兩個字：正常'}],thinking:'low',signal:ctrl.signal});out.textContent='連線正常。實際使用的模型：'+r.model;}catch(e){out.textContent=e.message;}},
   listModels:async()=>{ACT.saveCfg();const out=$('#cfOut');out.textContent='查詢中…';try{const res=await fetch(API+'/models?pageSize=200',{headers:{'x-goog-api-key':CFG.apiKey}});if(!res.ok)throw new Error('查詢失敗 '+res.status+'：'+(await apiError(res)).slice(0,200));const j=await res.json();const names=(j.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes('generateContent')).map(m=>m.name.replace('models/','')).filter(n=>/gemini/.test(n)&&!/image|tts|audio|embedding|live/.test(n));$('#models').innerHTML=names.map(n=>'<option value="'+esc(n)+'">').join('');out.textContent=names.length?'這把 key 可用的模型：'+names.join('、'):'這把 key 沒有可用的 Gemini 模型';}catch(e){out.textContent=e.message;}},
   backup:()=>download('婦癌唸書筆記_備份_'+today()+'.json',JSON.stringify({app:'gynonc-study-notes',v:1,state:S}),'application/json'),
-  restore:()=>pick('.json',false,async fs=>{try{const j=JSON.parse(await fs[0].text());const st=j.state||j;if(!Array.isArray(st.chapters)||!st.seq)throw new Error('x');if(S.chapters.length&&!confirm('還原會取代目前這台裝置上的筆記（'+S.chapters.length+' 章）與你的記號（'+(S.annos||[]).length+' 個）。確定？'))return;S=Object.assign(blank(),st);UI.chapterId=null;UI.examId=null;save();toast('已還原 '+S.chapters.length+' 章筆記');go('notes');}catch(e){toast('這不是有效的備份檔');}}),
+  restore:()=>pick('.json',false,async fs=>{try{const j=JSON.parse(await fs[0].text());const st=j.state||j;if(!Array.isArray(st.chapters)||!st.seq)throw new Error('x');if(S.chapters.length&&!confirm('還原會取代目前這台裝置上的筆記（'+S.chapters.length+' 章）。'+((S.annos||[]).length?'備份檔裡若沒有記號，會保留你現在的 '+S.annos.length+' 個記號；若備份檔有記號，則以備份檔為準。':'')+'確定？'))return;const keep=(!st.annos||!st.annos.length)&&(S.annos||[]).length?S.annos:null;S=Object.assign(blank(),st);if(keep)S.annos=keep;UI.chapterId=null;UI.examId=null;save();toast('已還原 '+S.chapters.length+' 章筆記'+(keep?'，保留你原本的 '+keep.length+' 個記號':''));go('notes');}catch(e){toast('這不是有效的備份檔');}}),
   wipe:()=>{if(!confirm('清除這台裝置上的所有筆記、文獻與考試筆記？這個動作無法復原，建議先下載備份。'))return;S=blank();UI.chapterId=null;UI.examId=null;save();renderSet();toast('已清除');}
 };
 document.addEventListener('click',e=>{
+  const im=e.target.closest('figure.bookfig img');
+  if(im){const d=$('#dlg');d.innerHTML='<div style="overflow:auto;max-height:78vh"><img src="'+im.src+'" alt="" style="max-width:none;width:100%;min-width:'+Math.min(im.naturalWidth,1000)+'px"></div><p class="small muted" style="margin:.6rem 0">'+esc(im.alt)+'</p><p class="row"><button class="btn pri" data-act="closeDlg">關閉</button></p>';d.style.maxWidth='min(64rem,96vw)';d.showModal();d.addEventListener('close',()=>{d.style.maxWidth='';},{once:true});return;}
   const mk=e.target.closest('mark.ann,.ann-chip');
   if(mk&&getSelection().isCollapsed){const a=(S.annos||[]).find(x=>x.id===mk.dataset.anno);if(a){annEdit(a,false);return;}}
   const cite=e.target.closest('a.cite');if(cite){e.preventDefault();showSrc(cite.dataset.src);return;}
