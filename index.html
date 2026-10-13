@@ -43,6 +43,9 @@
 .doc .src{color:var(--muted);font-size:.9rem;margin:0}
 .doc .refs{font-size:.92rem}
 .doc .refs li{margin:.5rem 0}
+/* 依據出處：試驗或指引 */
+.doc .ev{font-size:.8em;line-height:1.5;color:var(--teal-d);background:#EAF3F0;padding:.05rem .35rem;margin-left:.25rem;border-radius:2px}
+.hide-ev .doc .ev{display:none}
 /* 原書圖表 */
 .doc figure.bookfig{margin:1.2rem 0;border:1px solid var(--line);background:#fff;padding:.6rem}
 .doc figure.bookfig img{display:block;max-width:100%;height:auto;margin:0 auto .4rem;cursor:zoom-in}
@@ -324,7 +327,7 @@ function inlineMd(s){
 }
 function lineMd(raw){
   const ids=[];const rest=raw.replace(/\s*\[\^(S\d+)\]/g,(m,id)=>{ids.push(id);return '';});
-  let h=inlineMd(rest);
+  let h=inlineMd(rest).replace(/〔依據：([^〕]+)〕/g,'<span class="ev">依據：$1</span>');
   if(ids.length){h='<span class="hl">'+h+'</span>'+[...new Set(ids)].map(id=>{const s=getSrc(id);return '<a class="cite" data-src="'+id+'" href="#src-'+id+'">'+esc(s?s.short:id)+'</a>';}).join('');}
   return h;
 }
@@ -813,7 +816,7 @@ function renderNotes(){
     $('#main').innerHTML='<div class="paper narrow"><h2 class="vt">還沒有筆記</h2><p class="lead">先丟一本電子書進來，分章整理成筆記；之後每讀到一篇新文獻，就把 PDF 丟進來，新的內容會比對既有筆記，加在對應的章節裡。</p><div class="row"><button class="btn pri" data-act="tab" data-tab="book">匯入電子書</button><button class="btn" data-act="tab" data-tab="lit">直接加入一篇文獻</button><button class="btn" data-act="addChapter">自己新增一章</button></div></div>';return;
   }
   if(!getCh(UI.chapterId))UI.chapterId=allChapters()[0]?.id;
-  $('#main').innerHTML='<div class="notes"><aside class="side'+(UI.treeOpen?' open':'')+'"><button class="btn tree-toggle" data-act="toggleTree" aria-expanded="'+(UI.treeOpen?'true':'false')+'" aria-controls="sideBody"><b id="curCh"></b><span>切換章節</span></button><div class="side-body" id="sideBody"><input type="search" id="q" placeholder="搜尋筆記內容" value="'+esc(UI.q)+'" aria-label="搜尋筆記內容"><p style="margin:.6rem 0 0"><label class="chk small"><input type="checkbox" id="onlyNew"'+(UI.onlyNew?' checked':'')+'> 只看新文獻補充</label></p><div id="tree"></div><p class="small" style="margin-top:1.4rem"><button class="link" data-act="annList">我的記號（'+(S.annos||[]).filter(a=>a.key.startsWith('m:')).length+'）</button>　<button class="link" data-act="addChapter">新增章節</button>　<button class="link" data-act="exportMaster" data-kind="html">匯出離線 HTML</button>　<button class="link" data-act="exportMaster" data-kind="md">匯出 Markdown</button></p></div></aside><article class="paper doc" id="pane"></article></div>';
+  $('#main').innerHTML='<div class="notes"><aside class="side'+(UI.treeOpen?' open':'')+'"><button class="btn tree-toggle" data-act="toggleTree" aria-expanded="'+(UI.treeOpen?'true':'false')+'" aria-controls="sideBody"><b id="curCh"></b><span>切換章節</span></button><div class="side-body" id="sideBody"><input type="search" id="q" placeholder="搜尋筆記內容" value="'+esc(UI.q)+'" aria-label="搜尋筆記內容"><p style="margin:.6rem 0 0"><label class="chk small"><input type="checkbox" id="onlyNew"'+(UI.onlyNew?' checked':'')+'> 只看新文獻補充</label><br><label class="chk small"><input type="checkbox" class="evToggle"'+(CFG.hideEv?'':' checked')+'> 顯示依據（試驗／指引出處）</label></p><div id="tree"></div><p class="small" style="margin-top:1.4rem"><button class="link" data-act="annList">我的記號（'+(S.annos||[]).filter(a=>a.key.startsWith('m:')).length+'）</button>　<button class="link" data-act="addChapter">新增章節</button>　<button class="link" data-act="exportMaster" data-kind="html">匯出離線 HTML</button>　<button class="link" data-act="exportMaster" data-kind="md">匯出 Markdown</button></p></div></aside><article class="paper doc" id="pane"></article></div>';
   renderTree();renderPane();
 }
 function renderTree(){
@@ -922,7 +925,7 @@ function renderExam(){
       if(UI.examCh&&!chs.some(c=>c.id===UI.examCh))UI.examCh='';
       const shown=UI.examCh?chs.filter(c=>c.id===UI.examCh):chs;
       const nA=(S.annos||[]).filter(a=>a.key.startsWith('e:'+e.id+':')).length;
-      h+='<h3 class="st" id="exNotes">'+esc(e.name)+'</h3><p class="row noprint"><span class="pair"><label for="exCh">顯示</label><select id="exCh"><option value="">全部章節（很長）</option>'+chs.map(c=>'<option value="'+c.id+'"'+(c.id===UI.examCh?' selected':'')+'>'+esc(c.title)+'</option>').join('')+'</select></span></p><p class="row small noprint"><button class="link" data-act="annList">我的記號（'+nA+'）</button><button class="link" data-act="exportExam" data-kind="html">匯出離線 HTML</button><button class="link" data-act="exportExam" data-kind="md">匯出 Markdown</button><button class="link" data-act="print">列印</button></p><p class="small muted noprint">選取任何一段文字，下方會出現工具列，可以劃重點、標不熟或加註記。</p><div id="exTocHolder" class="noprint"></div><div class="doc">'+shown.map(c=>'<p class="src" style="margin-top:2.5rem">《'+esc(bookTitle(c))+'》'+(e.notes[c.id].rev!==c.rev?'　母本已更新，這份是舊版':'')+'</p><h2>'+esc(c.title)+'</h2><div data-akey="e:'+e.id+':'+c.id+'">'+mdRender(e.notes[c.id].md)+'</div>').join('')+(UI.examCh?'<p class="row noprint" style="margin-top:2rem">'+(()=>{const i=chs.findIndex(c=>c.id===UI.examCh);return (i>0?'<button class="btn" data-act="exGoCh" data-id="'+chs[i-1].id+'">上一章</button>':'')+(i<chs.length-1?'<button class="btn" data-act="exGoCh" data-id="'+chs[i+1].id+'">下一章</button>':'');})()+'</p>':'')+'</div>';
+      h+='<h3 class="st" id="exNotes">'+esc(e.name)+'</h3><p class="row noprint"><span class="pair"><label for="exCh">顯示</label><select id="exCh"><option value="">全部章節（很長）</option>'+chs.map(c=>'<option value="'+c.id+'"'+(c.id===UI.examCh?' selected':'')+'>'+esc(c.title)+'</option>').join('')+'</select></span></p><p class="row small noprint"><button class="link" data-act="annList">我的記號（'+nA+'）</button><button class="link" data-act="exportExam" data-kind="html">匯出離線 HTML</button><button class="link" data-act="exportExam" data-kind="md">匯出 Markdown</button><button class="link" data-act="print">列印</button></p><p class="small muted noprint">選取任何一段文字，下方會出現工具列，可以劃重點、標不熟或加註記。　<label class="chk"><input type="checkbox" class="evToggle"'+(CFG.hideEv?'':' checked')+'> 顯示依據（試驗／指引出處）</label></p><div id="exTocHolder" class="noprint"></div><div class="doc">'+shown.map(c=>'<p class="src" style="margin-top:2.5rem">《'+esc(bookTitle(c))+'》'+(e.notes[c.id].rev!==c.rev?'　母本已更新，這份是舊版':'')+'</p><h2>'+esc(c.title)+'</h2><div data-akey="e:'+e.id+':'+c.id+'">'+mdRender(e.notes[c.id].md)+'</div>').join('')+(UI.examCh?'<p class="row noprint" style="margin-top:2rem">'+(()=>{const i=chs.findIndex(c=>c.id===UI.examCh);return (i>0?'<button class="btn" data-act="exGoCh" data-id="'+chs[i-1].id+'">上一章</button>':'')+(i<chs.length-1?'<button class="btn" data-act="exGoCh" data-id="'+chs[i+1].id+'">下一章</button>':'');})()+'</p>':'')+'</div>';
     }
   }
   $('#main').innerHTML=h+'</div>';
@@ -1163,6 +1166,7 @@ document.addEventListener('input',e=>{
 document.addEventListener('change',e=>{
   const t=e.target;
   if(t.id==='onlyNew'){UI.onlyNew=t.checked;renderPane();}
+  else if(t.matches('.evToggle')){CFG.hideEv=!t.checked;saveCfg();document.body.classList.toggle('hide-ev',!!CFG.hideEv);$$('.evToggle').forEach(x=>x.checked=t.checked);}
   else if(t.matches('.lit-on')){getQ(t.dataset.lit).result.items[+t.dataset.i].on=t.checked;}
   else if(t.matches('.lit-ch')){const it=getQ(t.dataset.lit).result.items[+t.dataset.i];it.chapterId=t.value;it.sectionId='';it.anchor='';paintLit();}
   else if(t.matches('.lit-sec')){const it=getQ(t.dataset.lit).result.items[+t.dataset.i];it.sectionId=t.value;it.anchor='';}
@@ -1183,6 +1187,7 @@ document.addEventListener('drop',e=>{
 window.addEventListener('beforeunload',e=>{if(JOB.ctrl){e.preventDefault();e.returnValue='';}});
 
 (async function init(){
+  document.body.classList.toggle('hide-ev',!!CFG.hideEv);
   await DB.open();
   const st=await DB.get('state');if(st&&Array.isArray(st.chapters))S=Object.assign(blank(),st);
   go('notes');
