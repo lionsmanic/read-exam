@@ -121,6 +121,23 @@ textarea{line-height:1.6;resize:vertical}
 .sec-edit input{font-weight:600;margin-bottom:.4rem}
 .sec-edit textarea{min-height:16rem;font-size:.92rem}
 mark.q{background:#BFE3DC}
+/* 小節目錄與閱讀進度 */
+.toc{border:1px solid var(--line);background:#FAFCFB;padding:.8rem 1rem;margin:1.2rem 0 .4rem}
+.toc-h{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;flex-wrap:wrap;font-weight:600;margin-bottom:.4rem}
+.toc-h .small{font-weight:400}
+.toc ol{list-style:none;margin:0;padding:0;columns:2 17rem;column-gap:1.5rem}
+.toc li{display:flex;align-items:flex-start;gap:.45rem;break-inside:avoid;padding:.12rem 0}
+.toc li .go{background:none;border:0;padding:.15rem 0;text-align:left;color:var(--teal-d);line-height:1.45;cursor:pointer}
+.toc li .go:hover{text-decoration:underline}
+.toc li.p2 .go{color:var(--muted)}
+.pg{flex:none;font:600 .74rem/1 var(--sans);border:1px solid var(--teal);color:var(--teal-d);background:#fff;padding:.28rem .4rem;cursor:pointer;min-width:2.9rem;border-radius:2px}
+.pg.p1{background:#E2F0EC}
+.pg.p2{background:var(--teal);color:#fff}
+.sec,.doc h3[id]{scroll-margin-top:5rem}
+.sec>h3 .h3tools{display:flex;gap:.8rem;align-items:baseline;flex:none}
+.prog{display:block;font:400 .74rem var(--sans);color:var(--muted);margin-top:.1rem}
+.prog.done{color:var(--teal-d)}
+@media (max-width:820px){.sec,.doc h3[id]{scroll-margin-top:3.6rem}.toc ol{columns:1}.pg{min-height:2.2rem;min-width:3.2rem}.toc li .go{padding:.45rem 0}}
 #annBar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(1rem + env(safe-area-inset-bottom));z-index:9;background:var(--ink);color:#fff;display:flex;gap:.3rem;align-items:center;padding:.35rem;box-shadow:0 4px 16px rgba(0,0,0,.25);max-width:calc(100vw - 1rem)}
 #annBar[hidden]{display:none}
 #annBar button{background:none;border:0;color:#fff;padding:.55rem .75rem;white-space:nowrap;min-height:2.75rem}
@@ -275,7 +292,7 @@ const DB={db:null,
   get(k){return new Promise(res=>{if(!this.db){try{res(JSON.parse(localStorage.getItem('gn_'+k)));}catch(e){res(null);}return;}const q=this.db.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>res(q.result??null);q.onerror=()=>res(null);});},
   set(k,v){return new Promise(res=>{if(!this.db){try{localStorage.setItem('gn_'+k,JSON.stringify(v));}catch(e){}res();return;}const tx=this.db.transaction('kv','readwrite');tx.objectStore('kv').put(v,k);tx.oncomplete=()=>res();tx.onerror=()=>res();});}
 };
-const blank=()=>({seq:{b:0,c:0,s:0,e:0},books:[],chapters:[],sources:[],exams:[],annos:[],figs:{}});
+const blank=()=>({seq:{b:0,c:0,s:0,e:0},books:[],chapters:[],sources:[],exams:[],annos:[],figs:{},progress:{}});
 let S=blank();
 let CFG={apiKey:'',model:'gemini-3.1-pro-preview',thinking:'high',level:'standard'};
 try{Object.assign(CFG,JSON.parse(localStorage.getItem('gn_cfg')||'{}'));}catch(e){}
@@ -804,23 +821,25 @@ function renderTree(){
   for(const b of S.books){
     const chs=chaptersOf(b).filter(c=>!q||(c.title+'\n'+chapterMd(c)).toLowerCase().includes(q));
     if(q&&!chs.length)continue;
-    html+='<div class="bk"><div class="bk-t"><span>'+esc(b.title)+'</span><button class="link small" data-act="bookMenu" data-id="'+b.id+'" aria-label="管理這本書">管理</button></div><ul>'+chs.map(c=>{const n=newCount(c);return '<li><button data-act="openCh" data-id="'+c.id+'"'+(c.id===UI.chapterId?' aria-current="true"':'')+'><span>'+esc(c.title)+'</span>'+(n?'<span class="cnt" title="新文獻補充的行數">+'+n+'</span>':'')+'</button></li>';}).join('')+'</ul></div>';
+    html+='<div class="bk"><div class="bk-t"><span>'+esc(b.title)+'</span><button class="link small" data-act="bookMenu" data-id="'+b.id+'" aria-label="管理這本書">管理</button></div><ul>'+chs.map(c=>{const n=newCount(c);return '<li><button data-act="openCh" data-id="'+c.id+'"'+(c.id===UI.chapterId?' aria-current="true"':'')+'><span>'+esc(c.title)+'</span>'+(n?'<span class="cnt" title="新文獻補充的行數">+'+n+'</span>':'')+'</button>'+(()=>{const p=chProgress(c);return p.seen?'<span class="prog'+(p.done===p.total?' done':'')+'" style="padding-left:.8rem">看完 '+p.done+'／'+p.total+'</span>':'';})()+'</li>';}).join('')+'</ul></div>';
   }
   $('#tree').innerHTML=html||'<p class="muted small">沒有符合「'+esc(UI.q)+'」的章節</p>';
 }
 function renderPane(){
   const c=getCh(UI.chapterId),pane=$('#pane');if($('#curCh'))$('#curCh').textContent=c?c.title:'選擇章節';if(!c){pane.innerHTML='';return;}
   let h='<p class="src">《'+esc(bookTitle(c))+'》'+(c.pages?'，第 '+esc(c.pages)+' '+(c.unit||'頁'):'')+'</p><h2>'+esc(c.title)+'</h2><div class="ch-tools"><button class="link" data-act="addSection">新增小節</button><button class="link" data-act="renameCh">重新命名</button><button class="link" data-act="print">列印這一章</button><button class="link danger" data-act="delCh">刪除這一章</button></div>';
+  h+='<div id="mTocWrap">'+tocHtml(c.sections.map(s=>({key:'m:'+s.id,target:'sec-'+s.id,label:esc(s.heading.replace(/\s*\(p\.[^)]*\)\s*$/,'').replace(/\s*\(補充\)\s*$/,''))})),'本章小節')+'</div>';
   let shown=0;
   for(const s of c.sections){
     if(UI.editSec===s.id){h+='<section class="sec sec-edit" data-sec="'+s.id+'"><h3><span>編輯小節</span></h3><input type="text" id="edH" value="'+esc(s.heading)+'" aria-label="小節標題"><textarea id="edM" aria-label="小節內容（Markdown）">'+esc(s.md)+'</textarea><p class="row small"><button class="btn pri" data-act="saveSec">儲存小節</button><button class="btn" data-act="cancelSec">取消</button><button class="link danger" data-act="delSec">刪除這個小節</button><span class="muted">行尾的 [^S1] 是文獻出處標記，保留它就會維持黃色劃線。</span></p></section>';shown++;continue;}
     let md=s.md;
     if(UI.onlyNew){md=md.split('\n').filter(l=>/\[\^S\d+\]/.test(l)).map(l=>l.replace(/^\s+/,'')).join('\n');if(!md)continue;}
     shown++;
-    h+='<section class="sec" data-sec="'+s.id+'" data-akey="m:'+s.id+'"><h3><span>'+lineMd(s.heading)+'</span><button class="link" data-act="editSec" data-id="'+s.id+'">編輯</button></h3>'+mdRender(md)+'</section>';
+    h+='<section class="sec" id="sec-'+s.id+'" data-sec="'+s.id+'" data-akey="m:'+s.id+'"><h3><span>'+lineMd(s.heading)+'</span><span class="h3tools">'+pgBtn('m:'+s.id)+'<button class="link" data-act="jump" data-target="mTocWrap">小節列表</button><button class="link" data-act="editSec" data-id="'+s.id+'">編輯</button></span></h3>'+mdRender(md)+'</section>';
   }
   if(!shown)h+='<p class="muted" style="margin-top:2rem">'+(UI.onlyNew?'這一章還沒有新文獻補充。':'這一章還沒有內容，按「新增小節」開始寫。')+'</p>';
   pane.innerHTML=h;
+  updateTocCount();
   applyAnnos(pane,'live');
   const q=UI.q.trim();if(q){const lq=q.toLowerCase();const w=document.createTreeWalker(pane,NodeFilter.SHOW_TEXT);const ns=[];while(w.nextNode())ns.push(w.currentNode);for(const n of ns){const i=n.nodeValue.toLowerCase().indexOf(lq);if(i<0||n.parentNode.closest('textarea,button,input'))continue;const r=document.createRange();r.setStart(n,i);r.setEnd(n,i+q.length);const m=document.createElement('mark');m.className='q';try{r.surroundContents(m);}catch(e){}}}
 }
@@ -903,10 +922,11 @@ function renderExam(){
       if(UI.examCh&&!chs.some(c=>c.id===UI.examCh))UI.examCh='';
       const shown=UI.examCh?chs.filter(c=>c.id===UI.examCh):chs;
       const nA=(S.annos||[]).filter(a=>a.key.startsWith('e:'+e.id+':')).length;
-      h+='<h3 class="st" id="exNotes">'+esc(e.name)+'</h3><p class="row noprint"><span class="pair"><label for="exCh">顯示</label><select id="exCh"><option value="">全部章節（很長）</option>'+chs.map(c=>'<option value="'+c.id+'"'+(c.id===UI.examCh?' selected':'')+'>'+esc(c.title)+'</option>').join('')+'</select></span></p><p class="row small noprint"><button class="link" data-act="annList">我的記號（'+nA+'）</button><button class="link" data-act="exportExam" data-kind="html">匯出離線 HTML</button><button class="link" data-act="exportExam" data-kind="md">匯出 Markdown</button><button class="link" data-act="print">列印</button></p><p class="small muted noprint">選取任何一段文字，下方會出現工具列，可以劃重點、標不熟或加註記。</p><div class="doc">'+shown.map(c=>'<p class="src" style="margin-top:2.5rem">《'+esc(bookTitle(c))+'》'+(e.notes[c.id].rev!==c.rev?'　母本已更新，這份是舊版':'')+'</p><h2>'+esc(c.title)+'</h2><div data-akey="e:'+e.id+':'+c.id+'">'+mdRender(e.notes[c.id].md)+'</div>').join('')+(UI.examCh?'<p class="row noprint" style="margin-top:2rem">'+(()=>{const i=chs.findIndex(c=>c.id===UI.examCh);return (i>0?'<button class="btn" data-act="exGoCh" data-id="'+chs[i-1].id+'">上一章</button>':'')+(i<chs.length-1?'<button class="btn" data-act="exGoCh" data-id="'+chs[i+1].id+'">下一章</button>':'');})()+'</p>':'')+'</div>';
+      h+='<h3 class="st" id="exNotes">'+esc(e.name)+'</h3><p class="row noprint"><span class="pair"><label for="exCh">顯示</label><select id="exCh"><option value="">全部章節（很長）</option>'+chs.map(c=>'<option value="'+c.id+'"'+(c.id===UI.examCh?' selected':'')+'>'+esc(c.title)+'</option>').join('')+'</select></span></p><p class="row small noprint"><button class="link" data-act="annList">我的記號（'+nA+'）</button><button class="link" data-act="exportExam" data-kind="html">匯出離線 HTML</button><button class="link" data-act="exportExam" data-kind="md">匯出 Markdown</button><button class="link" data-act="print">列印</button></p><p class="small muted noprint">選取任何一段文字，下方會出現工具列，可以劃重點、標不熟或加註記。</p><div id="exTocHolder" class="noprint"></div><div class="doc">'+shown.map(c=>'<p class="src" style="margin-top:2.5rem">《'+esc(bookTitle(c))+'》'+(e.notes[c.id].rev!==c.rev?'　母本已更新，這份是舊版':'')+'</p><h2>'+esc(c.title)+'</h2><div data-akey="e:'+e.id+':'+c.id+'">'+mdRender(e.notes[c.id].md)+'</div>').join('')+(UI.examCh?'<p class="row noprint" style="margin-top:2rem">'+(()=>{const i=chs.findIndex(c=>c.id===UI.examCh);return (i>0?'<button class="btn" data-act="exGoCh" data-id="'+chs[i-1].id+'">上一章</button>':'')+(i<chs.length-1?'<button class="btn" data-act="exGoCh" data-id="'+chs[i+1].id+'">下一章</button>':'');})()+'</p>':'')+'</div>';
     }
   }
   $('#main').innerHTML=h+'</div>';
+  {const e=getExam();if(e&&$('#main .doc')){const chs=examChapters(e);decorateExam(e,UI.examCh?chs.filter(c=>c.id===UI.examCh):chs);}}
   applyAnnos($('#main'),'live');
 }
 function readExamForm(){const e=getExam();if(!e||!$('#exName'))return;e.name=$('#exName').value.trim()||e.name;e.scope=$('#exScope').value;e.level=$('#exLevel').value;$$('.ex-f').forEach(x=>e.formats[x.value]=x.checked);e.chapterIds=$$('.ex-c').filter(x=>x.checked).map(x=>x.value);save();}
@@ -1030,6 +1050,34 @@ function annGo(id){
   if(!mk){toast('找不到這段原文（筆記內容可能已修改）');return;}
   mk.scrollIntoView({block:'center'});mk.classList.add('flash');setTimeout(()=>mk.classList.remove('flash'),1600);
 }
+/* ========== 小節目錄與閱讀進度（未讀 → 看過 → 看完） ========== */
+const PG_LABEL=['未讀','看過','看完'];
+const pgGet=k=>(S.progress||{})[k]||0;
+const pgBtn=k=>'<button class="pg p'+pgGet(k)+'" data-act="prog" data-pkey="'+esc(k)+'" title="點一下切換：未讀 → 看過 → 看完">'+PG_LABEL[pgGet(k)]+'</button>';
+function pgCycle(k){S.progress=S.progress||{};const v=(pgGet(k)+1)%3;if(v)S.progress[k]=v;else delete S.progress[k];save();
+  $$('[data-pkey="'+CSS.escape(k)+'"]').forEach(b=>{b.className='pg p'+v;b.textContent=PG_LABEL[v];b.closest('li')?.classList.toggle('p2',v===2);});
+  updateTocCount();if(k.startsWith('m:')&&$('#tree'))renderTree();}
+function chProgress(c){const ks=c.sections.map(s=>'m:'+s.id);return {done:ks.filter(k=>pgGet(k)===2).length,seen:ks.filter(k=>pgGet(k)>=1).length,total:ks.length};}
+function tocHtml(items,title){
+  if(!items.length)return '';
+  return '<nav class="toc" aria-label="小節列表"><div class="toc-h"><span>'+esc(title)+'</span><span class="small muted toc-count"></span></div><ol>'+items.map(it=>'<li class="'+(pgGet(it.key)===2?'p2':'')+'">'+pgBtn(it.key)+'<button class="go" data-act="jump" data-target="'+esc(it.target)+'">'+it.label+'</button></li>').join('')+'</ol></nav>';
+}
+function updateTocCount(){$$('.toc').forEach(t=>{const bs=$$('.pg',t);const d=bs.filter(b=>b.classList.contains('p2')).length,s1=bs.filter(b=>!b.classList.contains('p0')).length;const el=$('.toc-count',t);if(el)el.textContent='看完 '+d+'／'+bs.length+(s1>d?'，看過 '+(s1-d):'');});}
+function jumpTo(id){const el=document.getElementById(id);if(!el)return;el.scrollIntoView({block:'start'});el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),1200);}
+/* 考試筆記：替每章裡的 ### 小節加 id、進度鈕，並產生目錄 */
+function decorateExam(e,chs){
+  const doc=$('#main .doc');if(!doc)return;
+  const items=[];
+  for(const box of $$('[data-akey^="e:"]',doc)){
+    const cid=box.dataset.akey.split(':')[2];
+    $$('h3',box).forEach((h,k)=>{const key='e:'+e.id+':'+cid+':'+h.textContent.trim();h.id='ex-'+cid+'-'+k;
+      const wrap=document.createElement('span');wrap.className='h3tools';wrap.innerHTML=pgBtn(key)+'<button class="link small" data-act="jump" data-target="exToc">小節列表</button>';
+      h.style.display='flex';h.style.justifyContent='space-between';h.style.alignItems='baseline';h.style.gap='1rem';h.appendChild(wrap);
+      items.push({key,target:h.id,label:esc((chs.length>1?(getCh(cid)?.title.replace(/^\d+\.\s*/,'')+' › '):'')+h.childNodes[0].textContent.trim())});});
+  }
+  const holder=$('#exTocHolder');if(holder){holder.innerHTML=tocHtml(items,chs.length>1?'全部章節的小節（建議用上面的「顯示」一次看一章）':'本章小節');const n=holder.querySelector('nav');if(n)n.id='exToc';}
+  updateTocCount();
+}
 function showSrc(id){
   const s=getSrc(id);if(!s)return;const d=$('#dlg');
   d.innerHTML='<h3>'+esc(s.short)+'</h3><p>'+esc(srcLine(s))+'</p>'+(s.design?'<p class="small"><strong>設計：</strong>'+esc(s.design)+'</p>':'')+'<p>'+esc(s.summary)+'</p>'+(s.limitations?'<p class="small"><strong>限制：</strong>'+esc(s.limitations)+'</p>':'')+'<p class="small muted">'+esc(s.addedAt)+' 加入，來源檔 '+esc(s.file)+'</p><p class="row"><button class="btn pri" data-act="closeDlg">關閉</button></p>';
@@ -1075,6 +1123,8 @@ const ACT={
   undoLit:()=>{if(!UNDO)return;S=JSON.parse(UNDO.state);const q=getQ(UNDO.qid);if(q){q.applied=false;q.srcId=null;q.result.items.forEach(i=>delete i.placed);}UNDO=null;save();renderLit();toast('已復原');},
   showSrc:b=>showSrc(b.dataset.id),
   annAdd:b=>annAdd(b.dataset.kind),
+  prog:b=>pgCycle(b.dataset.pkey),
+  jump:b=>jumpTo(b.dataset.target),
   annList:()=>annList(),
   annFilter:b=>{UI.annFilter=b.dataset.f;annList();},
   annGo:b=>annGo(b.dataset.id),
@@ -1090,7 +1140,7 @@ const ACT={
   testKey:async()=>{ACT.saveCfg();const out=$('#cfOut');out.textContent='連線中…';try{const ctrl=new AbortController();const r=await gemini({parts:[{text:'只回覆兩個字：正常'}],thinking:'low',signal:ctrl.signal});out.textContent='連線正常。實際使用的模型：'+r.model;}catch(e){out.textContent=e.message;}},
   listModels:async()=>{ACT.saveCfg();const out=$('#cfOut');out.textContent='查詢中…';try{const res=await fetch(API+'/models?pageSize=200',{headers:{'x-goog-api-key':CFG.apiKey}});if(!res.ok)throw new Error('查詢失敗 '+res.status+'：'+(await apiError(res)).slice(0,200));const j=await res.json();const names=(j.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes('generateContent')).map(m=>m.name.replace('models/','')).filter(n=>/gemini/.test(n)&&!/image|tts|audio|embedding|live/.test(n));$('#models').innerHTML=names.map(n=>'<option value="'+esc(n)+'">').join('');out.textContent=names.length?'這把 key 可用的模型：'+names.join('、'):'這把 key 沒有可用的 Gemini 模型';}catch(e){out.textContent=e.message;}},
   backup:()=>download('婦癌唸書筆記_備份_'+today()+'.json',JSON.stringify({app:'gynonc-study-notes',v:1,state:S}),'application/json'),
-  restore:()=>pick('.json',false,async fs=>{try{const j=JSON.parse(await fs[0].text());const st=j.state||j;if(!Array.isArray(st.chapters)||!st.seq)throw new Error('x');if(S.chapters.length&&!confirm('還原會取代目前這台裝置上的筆記（'+S.chapters.length+' 章）。'+((S.annos||[]).length?'備份檔裡若沒有記號，會保留你現在的 '+S.annos.length+' 個記號；若備份檔有記號，則以備份檔為準。':'')+'確定？'))return;const keep=(!st.annos||!st.annos.length)&&(S.annos||[]).length?S.annos:null;S=Object.assign(blank(),st);if(keep)S.annos=keep;UI.chapterId=null;UI.examId=null;save();toast('已還原 '+S.chapters.length+' 章筆記'+(keep?'，保留你原本的 '+keep.length+' 個記號':''));go('notes');}catch(e){toast('這不是有效的備份檔');}}),
+  restore:()=>pick('.json',false,async fs=>{try{const j=JSON.parse(await fs[0].text());const st=j.state||j;if(!Array.isArray(st.chapters)||!st.seq)throw new Error('x');if(S.chapters.length&&!confirm('還原會取代目前這台裝置上的筆記（'+S.chapters.length+' 章）。'+((S.annos||[]).length?'備份檔裡若沒有記號，會保留你現在的 '+S.annos.length+' 個記號；若備份檔有記號，則以備份檔為準。':'')+'確定？'))return;const keep=(!st.annos||!st.annos.length)&&(S.annos||[]).length?S.annos:null;const keepP=(!st.progress||!Object.keys(st.progress).length)&&Object.keys(S.progress||{}).length?S.progress:null;S=Object.assign(blank(),st);if(keep)S.annos=keep;if(keepP)S.progress=keepP;UI.chapterId=null;UI.examId=null;save();toast('已還原 '+S.chapters.length+' 章筆記'+(keep?'，保留你原本的 '+keep.length+' 個記號':''));go('notes');}catch(e){toast('這不是有效的備份檔');}}),
   wipe:()=>{if(!confirm('清除這台裝置上的所有筆記、文獻與考試筆記？這個動作無法復原，建議先下載備份。'))return;S=blank();UI.chapterId=null;UI.examId=null;save();renderSet();toast('已清除');}
 };
 document.addEventListener('click',e=>{
