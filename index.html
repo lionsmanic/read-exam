@@ -48,6 +48,9 @@
 .doc mark.my-st{background:#F9D3DF;color:inherit;padding:0 1px;box-shadow:inset 0 -2px 0 #B0245A}
 .doc .mynote{border-left:3px solid var(--teal);background:#F2F8F6;padding:.45rem .95rem;margin:.5rem 0 1rem}
 .doc .mynote h5,.doc .mynote h6{margin:.6rem 0 .2rem}
+.doc mark.nt-mn{background:#E9DDF5;color:inherit;padding:.05em .2em;border-bottom:2px solid #8A5BB8;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.doc mark.nt-key{background:#FCEFC0;color:inherit;padding:.05em .2em;border-bottom:2px solid #C9A227;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.doc .mynote .nt-legend{font-size:.8rem;color:var(--muted,#667);margin:.1rem 0 .4rem}
 /* 依據出處：試驗或指引 */
 .doc .ev{font-size:.8em;line-height:1.5;color:var(--teal-d);background:#EAF3F0;padding:.05rem .35rem;margin-left:.25rem;border-radius:2px}
 .hide-ev .doc .ev{display:none}
@@ -340,7 +343,7 @@ function inlineMd(s){
   s=s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
   s=s.replace(/(^|[^*])\*([^*\s][^*]*)\*/g,'$1<em>$2</em>');
   s=s.replace(/==([^=]+)==/g,'<mark>$1</mark>');
-  s=s.replace(/\{\+([\s\S]+?)\+\}/g,'<mark class="my-hl">$1</mark>').replace(/\{!([\s\S]+?)!\}/g,'<mark class="my-st">$1</mark>');
+  s=s.replace(/\{\+([\s\S]+?)\+\}/g,'<mark class="my-hl">$1</mark>').replace(/\{!([\s\S]+?)!\}/g,'<mark class="my-st">$1</mark>').replace(/\{~([\s\S]+?)~\}/g,'<mark class="nt-mn">$1</mark>').replace(/\{\^([\s\S]+?)\^\}/g,'<mark class="nt-key">$1</mark>');
   return s;
 }
 function lineMd(raw){
@@ -353,13 +356,32 @@ const RE_LIST=/^(\s*)([-*+]|\d+[.)])\s+(.*)$/;
 const isTableRow=l=>/^\s*\|.*\|\s*$/.test(l);
 const isTableSep=l=>/^\s*\|?[\s:|-]+\|?\s*$/.test(l)&&l.includes('-');
 const cells=l=>l.trim().replace(/^\|/,'').replace(/\|$/,'').split('|').map(x=>x.trim());
+/* 我的心得：口訣（紫）與重點整理（黃）自動上色 */
+const RE_MN=/口訣|記憶[：:「]|分類記憶|記法|速記|諧音/, RE_KEY=/^(重點|考試重點|考點|總結|最終總結|結論|必背|記住|一句話|核心|精華|Take[- ]?home|關鍵)/i, RE_KEYH=/重點|總結|精華|整理|必背|考點|結論|極簡|速覽/;
+function noteMd(src){
+  const L=String(src||'').replace(/\r/g,'').split('\n');let st=null;
+  const wrap=(l,k)=>{const m=l.match(/^(\s*(?:#{1,6}\s+|[-*+]\s+|\d+[.)]\s+|>\s*)?)(.*)$/);const body=m[2].trim();if(!body||/^\{[~^]/.test(body))return l;return m[1]+(k==='mn'?'{~':'{^')+body+(k==='mn'?'~}':'^}');};
+  return L.map(l=>{
+    const t=l.trim();
+    if(!t){st=null;return l;}
+    if(isTableRow(l)||/^:::/.test(t)||/^(-{3,}|\*{3,})$/.test(t))return l;
+    const body=t.replace(/^(#{1,6}\s+|[-*+]\s+|\d+[.)]\s+|>\s*)/,'').replace(/^\*+|\*+$/g,'').replace(/^[一二三四五六七八九十]+、\s*/,'');
+    const isHead=/^#{1,6}\s/.test(t)||/^[一二三四五六七八九十]+、/.test(body)||(/[：:]$/.test(body)&&body.length<=24);
+    const top=/^#{1,2}\s/.test(t);
+    if(RE_MN.test(body)){st=top?null:(isHead||!/「/.test(body)?'mn':st);return wrap(l,'mn');}
+    if(RE_KEY.test(body)||(isHead&&RE_KEYH.test(body))){st=top?null:(isHead?'key':st);return wrap(l,'key');}
+    if(isHead){st=null;return l;}
+    if(/^[*]*「[^」]+」/.test(body))return wrap(l,'mn');
+    return st?wrap(l,st):l;
+  }).join('\n');
+}
 function mdRender(src){
   const L=String(src||'').replace(/\r/g,'').split('\n');let out='',i=0,m;
   const blockStart=k=>L[k].trim()===':::note'||/^#{1,6}\s/.test(L[k])||RE_LIST.test(L[k])||/^\s*>/.test(L[k])||(isTableRow(L[k])&&k+1<L.length&&isTableSep(L[k+1]));
   while(i<L.length){
     const l=L[i];
     if(!l.trim()){i++;continue;}
-    if(l.trim()===':::note'){const b=[];i++;while(i<L.length&&L[i].trim()!==':::'){b.push(L[i]);i++;}i++;out+='<div class="mynote">'+mdRender(b.join('\n'))+'</div>';continue;}
+    if(l.trim()===':::note'){const b=[];i++;while(i<L.length&&L[i].trim()!==':::'){b.push(L[i]);i++;}i++;out+='<div class="mynote">'+mdRender(noteMd(b.join('\n')))+'</div>';continue;}
     if((m=l.match(/^(#{1,6})\s+(.*)$/))){const n=Math.min(6,Math.max(3,m[1].length+1));out+='<h'+n+'>'+lineMd(m[2])+'</h'+n+'>';i++;continue;}
     if(/^\s*(-{3,}|\*{3,})\s*$/.test(l)){out+='<hr>';i++;continue;}
     if((m=l.match(/^\s*!\[([^\]]*)\]\(fig:([\w.-]+)\)\s*$/))){const f=(S.figs||{})[m[2]];out+=f&&f.src&&f.src.length?'<figure class="bookfig" data-fig="'+esc(m[2])+'">'+f.src.map((u,k)=>'<img src="'+esc(u)+'" alt="'+esc(m[1])+(f.src.length>1?'（'+(k+1)+'/'+f.src.length+'）':'')+'" loading="lazy">').join('')+'<figcaption>'+inlineMd(m[1])+'</figcaption></figure>':'<figure class="bookfig missing">［圖表未匯入：'+inlineMd(m[1])+'］</figure>';i++;continue;}
@@ -1172,7 +1194,7 @@ function revItem(it,n){
     const a=it.a,x=annLines(a);
     meta=esc((x?.c?.title||'')+(x?.s?' › '+x.s.heading.replace(/\s*\(p\.[^)]*\)\s*$/,''):''));
     body='<div class="doc rev-body" data-akey="rev">'+mdRender(x&&x.md?x.md:a.quote)+'</div>';
-    if(a.note)body+='<div class="doc"><div class="mynote"><strong>我的心得</strong>'+mdRender(a.note)+'</div></div>';
+    if(a.note)body+='<div class="doc"><div class="mynote"><strong>我的心得</strong>'+(()=>{const h=mdRender(noteMd(a.note));return (/nt-(mn|key)/.test(h)?'<p class="nt-legend"><mark class="nt-mn">紫＝口訣</mark>　<mark class="nt-key">黃＝重點整理</mark></p>':'')+h;})()+'</div></div>';
     extra='<button class="link" data-act="annGo" data-id="'+a.id+'">到原文</button>'+(a.star?'<button class="link" data-act="revKnown" data-i="'+n+'">降為綠（次要）</button>':'<button class="link" data-act="revUnknown" data-i="'+n+'">升為紅（主要）</button>');
   }else{
     meta=esc((it.c?it.c.title:'')+'｜'+it.where);
