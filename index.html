@@ -153,10 +153,11 @@ mark.q{background:#BFE3DC}
 .rev-card{background:var(--paper);border:1px solid var(--line);border-top:4px solid var(--teal);padding:1.3rem 1.5rem;min-height:14rem}
 .doc table:has(th.th-red) td:first-child,.doc table:has(th.th-red) th:first-child{min-width:5.5em;font-weight:600}.doc table:has(th.th-red) td:nth-child(2){min-width:12em}.doc table:has(th.th-red) td:nth-child(3){min-width:9em;color:#3c4a44}.doc th.th-red{background:#F9D3DF}.doc th.th-green{background:#CDEBD8}.rev-card.st{border-top-color:#B0245A}.rev-card.hl{border-top-color:#3E8E5E}.rev-card.tb{border-top-color:#B0245A}.rev-card.tb .doc{font-size:1rem}.rev-card.tb th:nth-child(2){background:#F9D3DF}.rev-card.tb th:nth-child(3){background:#CDEBD8}.rev-card.mn{border-top-color:var(--plum)}.rev-card.qr{border-top-color:#C9A227}
 .rev-meta{font-size:.85rem;color:var(--muted);margin:0 0 .7rem;display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap}
-.rev-card .doc{font-size:1.08rem}.rev-card.rev-flat{min-height:0;margin:0 0 .9rem;padding:.9rem 1.2rem}.rev-flat .doc{font-size:1rem}.rev-flat .row{margin:.4rem 0 0}h3.rev-ch{margin:1.6rem 0 .6rem;font-size:1.15rem;border-bottom:1px solid var(--line);padding-bottom:.3rem}
+.rev-card .doc{font-size:1.08rem}.tts-bar{display:flex;flex-wrap:wrap;gap:.6rem 1rem;align-items:center;margin:.2rem 0 1rem}.rev-card.speaking{outline:3px solid #C9A227;outline-offset:2px}.rev-card.rd .doc ol li{margin:.35rem 0}.rev-card.rd{border-top-color:#C9A227}.rev-card.rev-flat{min-height:0;margin:0 0 .9rem;padding:.9rem 1.2rem}.rev-flat .doc{font-size:1rem}.rev-flat .row{margin:.4rem 0 0}h3.rev-ch{margin:1.6rem 0 .6rem;font-size:1.15rem;border-bottom:1px solid var(--line);padding-bottom:.3rem}
 .rev-nav{display:flex;justify-content:space-between;gap:.6rem;margin:1rem 0;flex-wrap:wrap}
 .rev-nav .btn{min-width:6.5rem}
 .rev-count{font:600 .95rem var(--sans);color:var(--muted);align-self:center}
+@media (max-width:820px){#main .rev-bar,#main .tts-bar{display:grid;grid-template-columns:1fr 1fr;gap:.45rem .6rem;margin-bottom:.7rem}#main .rev-bar .pair,#main .tts-bar .pair{flex-direction:column;align-items:stretch;gap:.1rem;font-size:.85rem}#main .rev-bar select,#main .tts-bar select{width:100%;min-height:0;padding:.3rem .4rem;font-size:.95rem}#main .tts-bar .btn{padding:.45rem .5rem}#main .tts-bar .chk{font-size:.85rem}.rev-lead{display:none}}
 @media (max-width:820px){.rev-card{padding:1rem .9rem;min-height:12rem}.rev-card.rev-flat{min-height:0;padding:.7rem .8rem}.rev-nav .btn{flex:1;min-width:0}}
 #annBar button{background:none;border:0;color:#fff;padding:.55rem .75rem;white-space:nowrap;min-height:2.75rem}
 #annBar button:hover{background:rgba(255,255,255,.12)}
@@ -827,7 +828,7 @@ function exportExam(kind){
 }
 
 /* ========== 畫面 ========== */
-function go(tab){UI.tab=tab;if(tab==='rev')UI.rev.list=null;$$('#tabs button').forEach(b=>b.dataset.tab===tab?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'));({notes:renderNotes,book:renderBook,lit:renderLit,exam:renderExam,rev:renderRev,set:renderSet})[tab]();window.scrollTo(0,0);}
+function go(tab){if(TTS.on)ttsStop();UI.tab=tab;if(tab==='rev')UI.rev.list=null;$$('#tabs button').forEach(b=>b.dataset.tab===tab?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'));({notes:renderNotes,book:renderBook,lit:renderLit,exam:renderExam,rev:renderRev,set:renderSet})[tab]();window.scrollTo(0,0);}
 
 function renderNotes(){
   if(!S.chapters.length){
@@ -1106,6 +1107,43 @@ function qrCards(){
     for(const l of m[2].split('\n'))if(/^\s*-\s+/.test(l)){const t=l.replace(/\s+/g,'');if(seen.has(t))continue;seen.add(t);out.push({kind:'qr',c,where:e.name,md:l.trim()});}}
   return out;
 }
+function readCards(){
+  const out=[];
+  for(const e of S.exams)for(const c of allChapters()){const n=e.notes[c.id];if(!n)continue;const m=n.md.match(/(^|\n)## 朗讀背誦\n([\s\S]*?)(?=\n## |$)/);if(!m)continue;
+    for(const blk of m[2].split(/\n(?=### )/)){const b=blk.trim();if(/^### /.test(b)&&/\n\s*(\d+\.|-)\s/.test(b))out.push({kind:'rd',c,where:e.name,md:b});}}
+  return out;
+}
+/* ========== 朗讀（瀏覽器內建語音，不經網路 API） ========== */
+const TTS={on:false,q:[],cards:[],ci:-1,auto:false};
+function ttsSay(t){
+  return t.replace(/≥/g,'大於等於').replace(/≤/g,'小於等於').replace(/>/g,'大於').replace(/</g,'小於').replace(/±/g,'，可加或不加').replace(/×/g,'乘').replace(/→/g,'，接著').replace(/\bvs\.?/gi,'對比')
+    .replace(/(\d)\s*[–~]\s*(\d)/g,'$1到$2').replace(/(\d)\s*mm\b/g,'$1毫米').replace(/mg\/m²|mg\/m2\b/g,'毫克每平方公尺').replace(/mg\/kg/g,'毫克每公斤').replace(/mIU\/mL/gi,' mIU每毫升').replace(/([A-Za-z])\/([A-Za-z])/g,'$1 $2').replace(/(\d)\s*cm\b/g,'$1公分').replace(/[★*#|]/g,' ').replace(/\s+/g,' ').trim();
+}
+function ttsTextOf(el){
+  const parts=[];
+  el.querySelectorAll('.doc').forEach(d=>{
+    for(const node of d.children){
+      if(node.querySelector&&node.querySelector('table')||node.tagName==='TABLE'){const tb=node.tagName==='TABLE'?node:node.querySelector('table');
+        tb.querySelectorAll('tbody tr').forEach(tr=>{const td=[...tr.children].map(x=>x.innerText.trim());if(td.length>=3)parts.push(td[0]+'：'+(td[1]&&td[1]!=='—'?td[1]+'。':'')+(td[2]&&td[2]!=='—'?'補充：'+td[2]+'。':''));else parts.push(td.join('，')+'。');});}
+      else if(!node.matches('.ev'))parts.push(node.innerText.replace(/^\s*\d+\.\s*/gm,'').trim()+(/^H\d$/.test(node.tagName)?'。':''));
+    }});
+  return ttsSay(parts.join('\n'));
+}
+function ttsVoice(){const v=speechSynthesis.getVoices();return v.find(x=>/zh[-_]TW/i.test(x.lang))||v.find(x=>/zh/i.test(x.lang))||null;}
+function ttsChunks(t){return t.split(/(?<=[。；！？\n])/).map(x=>x.trim()).filter(Boolean).flatMap(x=>x.length>160?x.split(/(?<=[，、])/):[x]);}
+function ttsStop(){TTS.on=false;TTS.q=[];TTS.ci=-1;try{speechSynthesis.cancel();}catch(e){}$$('.speaking').forEach(x=>x.classList.remove('speaking'));ttsBtns();}
+function ttsBtns(){$$('[data-act=ttsPlay],[data-act=ttsAll]').forEach(b=>b.hidden=TTS.on);$$('[data-act=ttsStop]').forEach(b=>b.hidden=!TTS.on);}
+function ttsNext(){
+  if(!TTS.on)return;
+  if(!TTS.q.length){
+    if(TTS.cards.length&&TTS.ci+1<TTS.cards.length){TTS.ci++;ttsCard();return;}
+    if(TTS.auto&&UI.rev.view!=='all'&&UI.rev.i<UI.rev.list.length-1){revMove(1,true);TTS.cards=[$('#revCard')];TTS.ci=0;ttsCard();return;}
+    ttsStop();return;}
+  const u=new SpeechSynthesisUtterance(TTS.q.shift());u.lang='zh-TW';const v=ttsVoice();if(v)u.voice=v;u.rate=+(CFG.ttsRate||1);
+  u.onend=()=>setTimeout(ttsNext,120);u.onerror=()=>setTimeout(ttsNext,120);speechSynthesis.speak(u);
+}
+function ttsCard(){const el=TTS.cards[TTS.ci];if(!el){ttsStop();return;}$$('.speaking').forEach(x=>x.classList.remove('speaking'));el.classList.add('speaking');if(UI.rev.view==='all')el.scrollIntoView({block:'start',behavior:'smooth'});TTS.q=ttsChunks(ttsTextOf(el));ttsNext();}
+function ttsStart(cards,from){if(!('speechSynthesis' in window)){toast('這個瀏覽器不支援朗讀');return;}try{speechSynthesis.cancel();}catch(e){}TTS.on=true;TTS.cards=cards;TTS.ci=from;ttsBtns();ttsCard();}
 function tableCards(){
   const out=[];
   for(const e of S.exams)for(const c of allChapters()){const n=e.notes[c.id];if(!n)continue;const m=n.md.match(/(^|\n)## 複習簡表\n([\s\S]*?)(?=\n## |$)/);if(!m)continue;
@@ -1117,6 +1155,7 @@ function revBuild(){
   if(r.type==='mn')list=mnemonicCards();
   else if(r.type==='qr')list=qrCards();
   else if(r.type==='tb')list=tableCards();
+  else if(r.type==='rd')list=readCards();
   else{
     const keyOrder=a=>{const m=a.key.match(/^m:(C\d+)\.(\d+)$/);return m?order.get(m[1])*1000+(+m[2]):1e9;};
     list=(S.annos||[]).filter(a=>a.key.startsWith('m:')&&(r.type==='all'||(r.type==='st'&&a.star)||(r.type==='hl'&&!a.star)||(r.type==='note'&&a.note)))
@@ -1126,7 +1165,7 @@ function revBuild(){
   if(r.order==='rand'){for(let i=list.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[list[i],list[j]]=[list[j],list[i]];}}
   r.list=list;r.i=Math.min(r.i,Math.max(0,list.length-1));
 }
-const REV_TYPES=[['tb','複習簡表（紅主綠次）'],['st','紅：主要重點'],['hl','綠：次要重點'],['note','我的心得'],['mn','口訣'],['qr','快速複習'],['all','全部標記']];
+const REV_TYPES=[['tb','複習簡表（紅主綠次）'],['rd','朗讀背誦'],['st','紅：主要重點'],['hl','綠：次要重點'],['note','我的心得'],['mn','口訣'],['qr','快速複習'],['all','全部標記']];
 function revItem(it,n){
   let body='',meta='',extra='';
   if(it.a){
@@ -1139,31 +1178,34 @@ function revItem(it,n){
     meta=esc((it.c?it.c.title:'')+'｜'+it.where);
     body='<div class="doc">'+mdRender(it.md)+'</div>';
   }
-  const kindLabel={st:'紅・主要',hl:'綠・次要',mn:'口訣',qr:'快速複習',tb:'複習簡表'}[it.kind]||'';
+  const kindLabel={st:'紅・主要',hl:'綠・次要',mn:'口訣',qr:'快速複習',tb:'複習簡表',rd:'朗讀背誦'}[it.kind]||'';
   return {meta,body,extra,kindLabel};
 }
 function revWrap(root,items){root.querySelectorAll('.rev-body').forEach((box,k)=>{const it=items[k];if(!it||!it.a)return;const idx=annIndex(box),at=annLocate(idx,{...it.a,pre:'',suf:''});if(at>=0)annWrap(idx,{...it.a,id:'rev'},at);});}
-function renderRev(){
+function renderRev(keepTts){
+  if(!keepTts&&TTS.on)ttsStop();
   const r=UI.rev;if(!r.list)revBuild();
   const chs=allChapters();
-  let h='<div class="narrow"><h2 class="vt">複習</h2><p class="lead">看你標的紅色主要重點、綠色次要重點、寫的心得，或複習簡表、口訣與快速複習。可一張一張看（鍵盤 ← → 或手機左右滑動換張），也可全部列出一次捲著看。</p>';
+  let h='<div class="narrow"><h2 class="vt">複習</h2><p class="lead rev-lead">看你標的紅色主要重點、綠色次要重點、寫的心得，或複習簡表、口訣與快速複習。可一張一張看（鍵盤 ← → 或手機左右滑動換張），也可全部列出一次捲著看。</p>';
   h+='<div class="rev-bar noprint"><span class="pair"><label for="revType">看什麼</label><select id="revType">'+REV_TYPES.map(([k,v])=>'<option value="'+k+'"'+(k===r.type?' selected':'')+'>'+v+'</option>').join('')+'</select></span><span class="pair"><label for="revCh">章節</label><select id="revCh"><option value="">全部章節</option>'+chs.map(c=>'<option value="'+c.id+'"'+(c.id===r.ch?' selected':'')+'>'+esc(c.title)+'</option>').join('')+'</select></span><span class="pair"><label for="revOrder">順序</label><select id="revOrder"><option value="seq"'+(r.order==='seq'?' selected':'')+'>依章節</option><option value="rand"'+(r.order==='rand'?' selected':'')+'>隨機</option></select></span><span class="pair"><label for="revView">呈現</label><select id="revView"><option value="card"'+(r.view!=='all'?' selected':'')+'>一張一張</option><option value="all"'+(r.view==='all'?' selected':'')+'>全部列出</option></select></span></div>';
+  const rate=String(CFG.ttsRate||1),rates=[['0.8','慢'],['1','正常'],['1.2','快'],['1.4','更快']];
+  const ttsBar='<div class="tts-bar noprint">'+(r.view==='all'?'<button class="btn" data-act="ttsAll">▶ 從頭連續朗讀</button>':'<button class="btn" data-act="ttsPlay">▶ 朗讀這張</button><label class="chk"><input type="checkbox" id="ttsAuto"'+(TTS.auto?' checked':'')+'> 唸完自動下一張</label>')+'<button class="btn" data-act="ttsStop" hidden>■ 停止</button><span class="pair"><label for="ttsRate">語速</label><select id="ttsRate">'+rates.map(([k,v])=>'<option value="'+k+'"'+(k===rate?' selected':'')+'>'+v+'</option>').join('')+'</select></span></div>';
   if(!r.list.length){$('#main').innerHTML=h+'<div class="rev-card"><p class="muted">這個篩選下沒有卡片。'+(r.type==='st'?'在母本筆記選取文字、按「紅：主要」就會出現在這裡。':'')+'</p></div></div>';return;}
   if(r.view==='all'){
     const lim=Math.min(r.list.length,r.shown||120),items=r.list.slice(0,lim);let last='';
-    h+='<p class="small muted">共 '+r.list.length+' 張'+(lim<r.list.length?'，目前顯示前 '+lim+' 張':'')+'。</p><div id="revAll">';
+    h+=ttsBar+'<p class="small muted">共 '+r.list.length+' 張'+(lim<r.list.length?'，目前顯示前 '+lim+' 張':'')+'。</p><div id="revAll">';
     items.forEach((it,n)=>{const x=revItem(it,n);const ct=it.c?it.c.title:'';
       if(r.order==='seq'&&ct&&ct!==last){h+='<h3 class="rev-ch">'+esc(ct)+'</h3>';last=ct;}
-      h+='<div class="rev-card rev-flat '+it.kind+'"><p class="rev-meta"><span>'+x.meta+'</span><span>'+x.kindLabel+'</span></p>'+x.body+(x.extra?'<p class="row small">'+x.extra+'</p>':'')+'</div>';});
+      h+='<div class="rev-card rev-flat '+it.kind+'"><p class="rev-meta"><span>'+x.meta+'</span><span>'+x.kindLabel+'</span></p>'+x.body+'<p class="row small"><button class="link noprint" data-act="ttsFrom" data-i="'+n+'">▶ 從這張唸</button>'+x.extra+'</p></div>';});
     h+='</div>'+(lim<r.list.length?'<p class="noprint" style="text-align:center;margin:1.2rem 0"><button class="btn pri" data-act="revMore">再顯示 '+Math.min(120,r.list.length-lim)+' 張（共 '+r.list.length+'）</button>　<button class="btn" data-act="revMoreAll">全部顯示</button></p>':'')+'</div>';
     $('#main').innerHTML=h;revWrap($('#revAll'),items);return;
   }
   const it=r.list[r.i],x=revItem(it,r.i);
   const nav='<div class="rev-nav noprint"><button class="btn" data-act="revPrev"'+(r.i===0?' disabled':'')+'>上一張</button><span class="rev-count">'+(r.i+1)+' / '+r.list.length+'</span><button class="btn pri" data-act="revNext"'+(r.i>=r.list.length-1?' disabled':'')+'>下一張</button></div>';
-  h+=nav+'<div class="rev-card '+it.kind+'" id="revCard"><p class="rev-meta"><span>'+x.meta+'</span><span>'+x.kindLabel+'</span></p>'+x.body+'<p class="row small" style="margin-top:1rem">'+x.extra+'</p></div>'+nav+'</div>';
+  h+=ttsBar+nav+'<div class="rev-card '+it.kind+'" id="revCard"><p class="rev-meta"><span>'+x.meta+'</span><span>'+x.kindLabel+'</span></p>'+x.body+'<p class="row small" style="margin-top:1rem">'+x.extra+'</p></div>'+nav+'</div>';
   $('#main').innerHTML=h;revWrap($('#revCard'),[it]);
 }
-function revMove(d){const r=UI.rev;if(!r.list)return;const n=Math.max(0,Math.min(r.list.length-1,r.i+d));if(n!==r.i){r.i=n;renderRev();window.scrollTo(0,0);}}
+function revMove(d,keepTts){const r=UI.rev;if(!r.list)return;const n=Math.max(0,Math.min(r.list.length-1,r.i+d));if(n!==r.i){r.i=n;renderRev(keepTts);window.scrollTo(0,0);if(keepTts)ttsBtns();}}
 document.addEventListener('keydown',e=>{if(UI.tab!=='rev'||UI.rev.view==='all'||e.target.closest('input,textarea,select')||$('#dlg').open)return;if(e.key==='ArrowRight')revMove(1);else if(e.key==='ArrowLeft')revMove(-1);});
 let _tx0=null;
 document.addEventListener('touchstart',e=>{if(UI.tab==='rev'&&e.target.closest('#revCard'))_tx0=[e.touches[0].clientX,e.touches[0].clientY];},{passive:true});
@@ -1245,6 +1287,10 @@ const ACT={
   revPrev:()=>revMove(-1),
   revNext:()=>revMove(1),
   revKnown:b=>{const k=b.dataset.i!=null?+b.dataset.i:UI.rev.i,it=UI.rev.list[k];if(!it||!it.a)return;it.a.star=false;save();const y=scrollY;if(UI.rev.type==='st'){UI.rev.list.splice(k,1);UI.rev.i=Math.min(UI.rev.i,Math.max(0,UI.rev.list.length-1));}else it.kind='hl';renderRev();if(UI.rev.view==='all')scrollTo(0,y);toast('已降為綠色次要重點');},
+  ttsPlay:()=>ttsStart([$('#revCard')],0),
+  ttsAll:()=>ttsStart([...$$('#revAll .rev-card')],0),
+  ttsFrom:b=>ttsStart([...$$('#revAll .rev-card')],+b.dataset.i),
+  ttsStop:()=>ttsStop(),
   revMore:()=>{const y=scrollY;UI.rev.shown=(UI.rev.shown||120)+120;renderRev();scrollTo(0,y);},
   revMoreAll:()=>{const y=scrollY;UI.rev.shown=1e9;renderRev();scrollTo(0,y);},
   revUnknown:b=>{const k=b.dataset.i!=null?+b.dataset.i:UI.rev.i,it=UI.rev.list[k];if(!it||!it.a)return;it.a.star=true;it.kind='st';save();const y=scrollY;if(UI.rev.type==='hl'){UI.rev.list.splice(k,1);UI.rev.i=Math.min(UI.rev.i,Math.max(0,UI.rev.list.length-1));}renderRev();if(UI.rev.view==='all')scrollTo(0,y);toast('已升為紅色主要重點');},
@@ -1292,6 +1338,8 @@ document.addEventListener('change',e=>{
   else if(t.matches('.lit-ch')){const it=getQ(t.dataset.lit).result.items[+t.dataset.i];it.chapterId=t.value;it.sectionId='';it.anchor='';paintLit();}
   else if(t.matches('.lit-sec')){const it=getQ(t.dataset.lit).result.items[+t.dataset.i];it.sectionId=t.value;it.anchor='';}
   else if(t.id==='exSel'){readExamForm();UI.examId=t.value;UI.examCh='';renderExam();}
+  else if(t.id==='ttsRate'){CFG.ttsRate=t.value;saveCfg();}
+  else if(t.id==='ttsAuto'){TTS.auto=t.checked;}
   else if(t.id==='revType'||t.id==='revCh'||t.id==='revOrder'||t.id==='revView'){UI.rev[{revType:'type',revCh:'ch',revOrder:'order',revView:'view'}[t.id]]=t.value;UI.rev.i=0;UI.rev.shown=120;revBuild();renderRev();window.scrollTo(0,0);}
   else if(t.id==='exCh'){UI.examCh=t.value;renderExam();$('#exNotes')?.scrollIntoView();}
   else if(t.id==='exNew'&&t.value){readExamForm();const e2=newExam(t.value==='__blank'?'':t.value);UI.examId=e2.id;save();renderExam();}
