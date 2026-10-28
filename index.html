@@ -43,6 +43,11 @@
 .doc .src{color:var(--muted);font-size:.9rem;margin:0}
 .doc .refs{font-size:.92rem}
 .doc .refs li{margin:.5rem 0}
+/* 我的標記筆記：我劃的重點／不熟、我的心得 */
+.doc mark.my-hl{background:#CDEBD8;color:inherit;padding:0 1px}
+.doc mark.my-st{background:#F9D3DF;color:inherit;padding:0 1px;box-shadow:inset 0 -2px 0 #B0245A}
+.doc .mynote{border-left:3px solid var(--teal);background:#F2F8F6;padding:.45rem .95rem;margin:.5rem 0 1rem}
+.doc .mynote h5,.doc .mynote h6{margin:.6rem 0 .2rem}
 /* 依據出處：試驗或指引 */
 .doc .ev{font-size:.8em;line-height:1.5;color:var(--teal-d);background:#EAF3F0;padding:.05rem .35rem;margin-left:.25rem;border-radius:2px}
 .hide-ev .doc .ev{display:none}
@@ -143,6 +148,16 @@ mark.q{background:#BFE3DC}
 @media (max-width:820px){.sec,.doc h3[id]{scroll-margin-top:3.6rem}.toc ol{columns:1}.pg{min-height:2.2rem;min-width:3.2rem}.toc li .go{padding:.45rem 0}}
 #annBar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(1rem + env(safe-area-inset-bottom));z-index:9;background:var(--ink);color:#fff;display:flex;gap:.3rem;align-items:center;padding:.35rem;box-shadow:0 4px 16px rgba(0,0,0,.25);max-width:calc(100vw - 1rem)}
 #annBar[hidden]{display:none}
+/* 複習卡片 */
+.rev-bar{display:flex;flex-wrap:wrap;gap:.6rem 1.2rem;align-items:center;margin-bottom:1rem}
+.rev-card{background:var(--paper);border:1px solid var(--line);border-top:4px solid var(--teal);padding:1.3rem 1.5rem;min-height:14rem}
+.rev-card.st{border-top-color:#B0245A}.rev-card.mn{border-top-color:var(--plum)}.rev-card.qr{border-top-color:#C9A227}
+.rev-meta{font-size:.85rem;color:var(--muted);margin:0 0 .7rem;display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.rev-card .doc{font-size:1.08rem}
+.rev-nav{display:flex;justify-content:space-between;gap:.6rem;margin:1rem 0;flex-wrap:wrap}
+.rev-nav .btn{min-width:6.5rem}
+.rev-count{font:600 .95rem var(--sans);color:var(--muted);align-self:center}
+@media (max-width:820px){.rev-card{padding:1rem .9rem;min-height:12rem}.rev-nav .btn{flex:1;min-width:0}}
 #annBar button{background:none;border:0;color:#fff;padding:.55rem .75rem;white-space:nowrap;min-height:2.75rem}
 #annBar button:hover{background:rgba(255,255,255,.12)}
 #annBar .sw{display:inline-block;width:.8rem;height:.8rem;margin-right:.35rem;vertical-align:-.05rem}
@@ -264,6 +279,7 @@ dialog h3{font:700 1.1rem/1.4 var(--serif);margin:0 0 .6rem}
     <button data-act="tab" data-tab="book"><span class="lg">匯入</span>電子書</button>
     <button data-act="tab" data-tab="lit"><span class="lg">加入</span>新文獻</button>
     <button data-act="tab" data-tab="exam">考試<span class="lg">筆記</span></button>
+    <button data-act="tab" data-tab="rev">複習</button>
     <button data-act="tab" data-tab="set">設定</button>
   </nav>
   <span id="saved"></span>
@@ -303,7 +319,7 @@ const saveCfg=()=>{try{localStorage.setItem('gn_cfg',JSON.stringify(CFG));}catch
 let saveT; function save(){clearTimeout(saveT);saveT=setTimeout(async()=>{await DB.set('state',S);$('#saved').textContent='已儲存在這台裝置 '+new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});},250);}
 
 const TOUCH=matchMedia('(pointer:coarse)').matches;
-const UI={tab:'notes',chapterId:null,onlyNew:false,q:'',examId:null,editSec:null,treeOpen:false,examCh:'',annFilter:'all'};
+const UI={rev:{ch:'',type:'st',order:'seq',i:0,list:null},tab:'notes',chapterId:null,onlyNew:false,q:'',examId:null,editSec:null,treeOpen:false,examCh:'',annFilter:'all'};
 const getCh=id=>S.chapters.find(c=>c.id===id);
 const getBook=id=>S.books.find(b=>b.id===id);
 const getSrc=id=>S.sources.find(s=>s.id===id);
@@ -323,6 +339,7 @@ function inlineMd(s){
   s=s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
   s=s.replace(/(^|[^*])\*([^*\s][^*]*)\*/g,'$1<em>$2</em>');
   s=s.replace(/==([^=]+)==/g,'<mark>$1</mark>');
+  s=s.replace(/\{\+([\s\S]+?)\+\}/g,'<mark class="my-hl">$1</mark>').replace(/\{!([\s\S]+?)!\}/g,'<mark class="my-st">$1</mark>');
   return s;
 }
 function lineMd(raw){
@@ -337,10 +354,11 @@ const isTableSep=l=>/^\s*\|?[\s:|-]+\|?\s*$/.test(l)&&l.includes('-');
 const cells=l=>l.trim().replace(/^\|/,'').replace(/\|$/,'').split('|').map(x=>x.trim());
 function mdRender(src){
   const L=String(src||'').replace(/\r/g,'').split('\n');let out='',i=0,m;
-  const blockStart=k=>/^#{1,6}\s/.test(L[k])||RE_LIST.test(L[k])||/^\s*>/.test(L[k])||(isTableRow(L[k])&&k+1<L.length&&isTableSep(L[k+1]));
+  const blockStart=k=>L[k].trim()===':::note'||/^#{1,6}\s/.test(L[k])||RE_LIST.test(L[k])||/^\s*>/.test(L[k])||(isTableRow(L[k])&&k+1<L.length&&isTableSep(L[k+1]));
   while(i<L.length){
     const l=L[i];
     if(!l.trim()){i++;continue;}
+    if(l.trim()===':::note'){const b=[];i++;while(i<L.length&&L[i].trim()!==':::'){b.push(L[i]);i++;}i++;out+='<div class="mynote">'+mdRender(b.join('\n'))+'</div>';continue;}
     if((m=l.match(/^(#{1,6})\s+(.*)$/))){const n=Math.min(6,Math.max(3,m[1].length+1));out+='<h'+n+'>'+lineMd(m[2])+'</h'+n+'>';i++;continue;}
     if(/^\s*(-{3,}|\*{3,})\s*$/.test(l)){out+='<hr>';i++;continue;}
     if((m=l.match(/^\s*!\[([^\]]*)\]\(fig:([\w.-]+)\)\s*$/))){const f=(S.figs||{})[m[2]];out+=f&&f.src&&f.src.length?'<figure class="bookfig" data-fig="'+esc(m[2])+'">'+f.src.map((u,k)=>'<img src="'+esc(u)+'" alt="'+esc(m[1])+(f.src.length>1?'（'+(k+1)+'/'+f.src.length+'）':'')+'" loading="lazy">').join('')+'<figcaption>'+inlineMd(m[1])+'</figcaption></figure>':'<figure class="bookfig missing">［圖表未匯入：'+inlineMd(m[1])+'］</figure>';i++;continue;}
@@ -809,7 +827,7 @@ function exportExam(kind){
 }
 
 /* ========== 畫面 ========== */
-function go(tab){UI.tab=tab;$$('#tabs button').forEach(b=>b.dataset.tab===tab?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'));({notes:renderNotes,book:renderBook,lit:renderLit,exam:renderExam,set:renderSet})[tab]();window.scrollTo(0,0);}
+function go(tab){UI.tab=tab;if(tab==='rev')UI.rev.list=null;$$('#tabs button').forEach(b=>b.dataset.tab===tab?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'));({notes:renderNotes,book:renderBook,lit:renderLit,exam:renderExam,rev:renderRev,set:renderSet})[tab]();window.scrollTo(0,0);}
 
 function renderNotes(){
   if(!S.chapters.length){
@@ -1021,7 +1039,7 @@ function annWhere(a){
   if((m=a.key.match(/^e:(E\d+):(C\d+)$/))){const e=S.exams.find(x=>x.id===m[1]);const c=getCh(m[2]);return {order:c?allChapters().indexOf(c):999,label:(c?c.title:'已刪除的章節'),kind:e?e.name:'考試筆記'};}
   return {order:999,label:'',kind:''};
 }
-function rerender(){if(UI.tab==='notes')renderPane();else if(UI.tab==='exam')renderExam();}
+function rerender(){UI.rev.list=null;if(UI.tab==='notes')renderPane();else if(UI.tab==='exam')renderExam();else if(UI.tab==='rev')renderRev();}
 function annAdd(kind){
   const sel=ANNSEL||readSelection();
   if(!sel){toast('先選取一段文字（在同一個小節內）');return;}
@@ -1053,6 +1071,83 @@ function annGo(id){
   if(!mk){toast('找不到這段原文（筆記內容可能已修改）');return;}
   mk.scrollIntoView({block:'center'});mk.classList.add('flash');setTimeout(()=>mk.classList.remove('flash'),1600);
 }
+
+/* ========== 複習：一張一張看不熟、重點、心得、口訣、快速複習 ========== */
+const _tx=document.createElement('div');
+const textOf=h=>{_tx.innerHTML=h;return _tx.textContent;};
+const lineText=l=>isTableSep(l)?'':(isTableRow(l)?cells(l).map(c=>textOf(lineMd(c))).join(''):textOf(mdRender(l)));
+const _secCache=new Map();
+function secIndex(s){
+  const k=s.id+'|'+s.md.length;if(_secCache.has(k))return _secCache.get(k);
+  const L=s.md.split('\n');let norm='';const owner=[];
+  const add=(t,o)=>{for(const ch of t)if(!/\s/.test(ch)){norm+=ch;owner.push(o);}};
+  add(textOf(lineMd(s.heading)),-1);L.forEach((l,i)=>add(lineText(l),i));
+  const r={L,norm,owner};_secCache.set(k,r);return r;
+}
+function annLines(a){
+  const m=a.key.match(/^m:(C\d+)\./);if(!m)return null;const c=getCh(m[1]);const s=c&&c.sections.find(x=>'m:'+x.id===a.key);if(!s)return null;
+  const ix=secIndex(s),at=annLocate({norm:ix.norm},a);if(at<0)return {c,s,md:''};
+  const ls=[...new Set(ix.owner.slice(at,at+squash(a.quote).length))].sort((x,y)=>x-y);
+  if(ls.length===1&&ls[0]===-1)return {c,s,md:'#### '+s.heading};
+  const L=ix.L;const keep=new Set(ls.filter(x=>x>=0));
+  for(const li of [...keep]){if(isTableRow(L[li])){let k=li;while(k>0&&(isTableRow(L[k-1])||isTableSep(L[k-1])))k--;keep.add(k);if(isTableSep(L[k+1]||''))keep.add(k+1);}}
+  const arr=[...keep].sort((x,y)=>x-y);const base=Math.min(...arr.map(i=>RE_LIST.test(L[i])?L[i].match(/^\s*/)[0].length:0));
+  return {c,s,md:arr.map(i=>RE_LIST.test(L[i])?L[i].slice(base):L[i]).join('\n')};
+}
+function mnemonicCards(){
+  const seen=new Set(),out=[];
+  const scan=(md,c,where)=>{const L=md.split('\n');for(let i=0;i<L.length;i++)if(/^>\s*\*\*口訣/.test(L[i])){const t=L[i].replace(/\s+/g,'');if(seen.has(t))continue;seen.add(t);out.push({kind:'mn',c,where,md:L[i]+'\n'+(L[i+1]&&/^>/.test(L[i+1])?L[i+1]:'')});}};
+  for(const c of allChapters()){for(const s of c.sections)scan(s.md,c,'母本');for(const e of S.exams){const n=e.notes[c.id];if(n)scan(n.md,c,e.name);}}
+  return out;
+}
+function qrCards(){
+  const out=[];
+  for(const e of S.exams)for(const c of allChapters()){const n=e.notes[c.id];if(!n)continue;const m=n.md.match(/(^|\n)## 快速複習\n([\s\S]*?)(\n## |$)/);if(!m)continue;
+    for(const l of m[2].split('\n'))if(/^\s*-\s+/.test(l))out.push({kind:'qr',c,where:e.name,md:l.trim()});}
+  return out;
+}
+function revBuild(){
+  const r=UI.rev,chs=allChapters(),order=new Map(chs.map((c,i)=>[c.id,i]));let list=[];
+  if(r.type==='mn')list=mnemonicCards();
+  else if(r.type==='qr')list=qrCards();
+  else{
+    const keyOrder=a=>{const m=a.key.match(/^m:(C\d+)\.(\d+)$/);return m?order.get(m[1])*1000+(+m[2]):1e9;};
+    list=(S.annos||[]).filter(a=>a.key.startsWith('m:')&&(r.type==='all'||(r.type==='st'&&a.star)||(r.type==='hl'&&!a.star)||(r.type==='note'&&a.note)))
+      .map(a=>({kind:a.star?'st':'hl',a,c:getCh(a.key.match(/^m:(C\d+)\./)?.[1]),k:keyOrder(a)})).sort((x,y)=>x.k-y.k);
+  }
+  if(r.ch)list=list.filter(x=>x.c&&x.c.id===r.ch);
+  if(r.order==='rand'){for(let i=list.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[list[i],list[j]]=[list[j],list[i]];}}
+  r.list=list;r.i=Math.min(r.i,Math.max(0,list.length-1));
+}
+const REV_TYPES=[['st','不熟'],['hl','重點'],['note','我的心得'],['mn','口訣'],['qr','快速複習'],['all','全部標記']];
+function renderRev(){
+  const r=UI.rev;if(!r.list)revBuild();
+  const chs=allChapters();
+  let h='<div class="narrow"><h2 class="vt">複習</h2><p class="lead">一張一張看你標的不熟、劃的重點、寫的心得，或口訣與快速複習。鍵盤 ← → 或手機左右滑動換張。</p>';
+  h+='<div class="rev-bar noprint"><span class="pair"><label for="revType">看什麼</label><select id="revType">'+REV_TYPES.map(([k,v])=>'<option value="'+k+'"'+(k===r.type?' selected':'')+'>'+v+'</option>').join('')+'</select></span><span class="pair"><label for="revCh">章節</label><select id="revCh"><option value="">全部章節</option>'+chs.map(c=>'<option value="'+c.id+'"'+(c.id===r.ch?' selected':'')+'>'+esc(c.title)+'</option>').join('')+'</select></span><span class="pair"><label for="revOrder">順序</label><select id="revOrder"><option value="seq"'+(r.order==='seq'?' selected':'')+'>依章節</option><option value="rand"'+(r.order==='rand'?' selected':'')+'>隨機</option></select></span></div>';
+  if(!r.list.length){$('#main').innerHTML=h+'<div class="rev-card"><p class="muted">這個篩選下沒有卡片。'+(r.type==='st'?'在母本筆記選取文字、按「不熟」就會出現在這裡。':'')+'</p></div></div>';return;}
+  const it=r.list[r.i];let body='',meta='',extra='';
+  if(it.a){
+    const a=it.a,x=annLines(a);
+    meta=esc((x?.c?.title||'')+(x?.s?' › '+x.s.heading.replace(/\s*\(p\.[^)]*\)\s*$/,''):''));
+    body='<div class="doc" id="revBody" data-akey="rev">'+mdRender(x&&x.md?x.md:a.quote)+'</div>';
+    if(a.note)body+='<div class="doc"><div class="mynote"><strong>我的心得</strong>'+mdRender(a.note)+'</div></div>';
+    extra='<button class="link" data-act="annGo" data-id="'+a.id+'">到原文</button>'+(a.star?'<button class="link" data-act="revKnown">這張熟了</button>':'<button class="link" data-act="revUnknown">改標不熟</button>');
+  }else{
+    meta=esc((it.c?it.c.title:'')+'｜'+it.where);
+    body='<div class="doc">'+mdRender(it.md)+'</div>';
+  }
+  const kindLabel={st:'不熟',hl:'重點',mn:'口訣',qr:'快速複習'}[it.kind]||'';
+  const nav='<div class="rev-nav noprint"><button class="btn" data-act="revPrev"'+(r.i===0?' disabled':'')+'>上一張</button><span class="rev-count">'+(r.i+1)+' / '+r.list.length+'</span><button class="btn pri" data-act="revNext"'+(r.i>=r.list.length-1?' disabled':'')+'>下一張</button></div>';
+  h+=nav+'<div class="rev-card '+it.kind+'" id="revCard"><p class="rev-meta"><span>'+meta+'</span><span>'+kindLabel+'</span></p>'+body+'<p class="row small" style="margin-top:1rem">'+extra+'</p></div>'+nav+'</div>';
+  $('#main').innerHTML=h;
+  if(it.a){const box=$('#revBody');const idx=annIndex(box),at=annLocate(idx,{...it.a,pre:'',suf:''});if(at>=0)annWrap(idx,{...it.a,id:'rev'},at);}
+}
+function revMove(d){const r=UI.rev;if(!r.list)return;const n=Math.max(0,Math.min(r.list.length-1,r.i+d));if(n!==r.i){r.i=n;renderRev();window.scrollTo(0,0);}}
+document.addEventListener('keydown',e=>{if(UI.tab!=='rev'||e.target.closest('input,textarea,select')||$('#dlg').open)return;if(e.key==='ArrowRight')revMove(1);else if(e.key==='ArrowLeft')revMove(-1);});
+let _tx0=null;
+document.addEventListener('touchstart',e=>{if(UI.tab==='rev'&&e.target.closest('#revCard'))_tx0=[e.touches[0].clientX,e.touches[0].clientY];},{passive:true});
+document.addEventListener('touchend',e=>{if(!_tx0)return;const dx=e.changedTouches[0].clientX-_tx0[0],dy=e.changedTouches[0].clientY-_tx0[1];_tx0=null;if(getSelection().toString())return;if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.5)revMove(dx<0?1:-1);},{passive:true});
 /* ========== 小節目錄與閱讀進度（未讀 → 看過 → 看完） ========== */
 const PG_LABEL=['未讀','看過','看完'];
 const pgGet=k=>(S.progress||{})[k]||0;
@@ -1127,6 +1222,10 @@ const ACT={
   showSrc:b=>showSrc(b.dataset.id),
   annAdd:b=>annAdd(b.dataset.kind),
   prog:b=>pgCycle(b.dataset.pkey),
+  revPrev:()=>revMove(-1),
+  revNext:()=>revMove(1),
+  revKnown:()=>{const it=UI.rev.list[UI.rev.i];if(!it||!it.a)return;it.a.star=false;save();if(UI.rev.type==='st'){UI.rev.list.splice(UI.rev.i,1);UI.rev.i=Math.min(UI.rev.i,Math.max(0,UI.rev.list.length-1));}else it.kind='hl';renderRev();toast('已改為「重點」，不再列在不熟');},
+  revUnknown:()=>{const it=UI.rev.list[UI.rev.i];if(!it||!it.a)return;it.a.star=true;it.kind='st';save();renderRev();toast('已標為不熟');},
   jump:b=>jumpTo(b.dataset.target),
   annList:()=>annList(),
   annFilter:b=>{UI.annFilter=b.dataset.f;annList();},
@@ -1171,6 +1270,7 @@ document.addEventListener('change',e=>{
   else if(t.matches('.lit-ch')){const it=getQ(t.dataset.lit).result.items[+t.dataset.i];it.chapterId=t.value;it.sectionId='';it.anchor='';paintLit();}
   else if(t.matches('.lit-sec')){const it=getQ(t.dataset.lit).result.items[+t.dataset.i];it.sectionId=t.value;it.anchor='';}
   else if(t.id==='exSel'){readExamForm();UI.examId=t.value;UI.examCh='';renderExam();}
+  else if(t.id==='revType'||t.id==='revCh'||t.id==='revOrder'){UI.rev[{revType:'type',revCh:'ch',revOrder:'order'}[t.id]]=t.value;UI.rev.i=0;revBuild();renderRev();}
   else if(t.id==='exCh'){UI.examCh=t.value;renderExam();$('#exNotes')?.scrollIntoView();}
   else if(t.id==='exNew'&&t.value){readExamForm();const e2=newExam(t.value==='__blank'?'':t.value);UI.examId=e2.id;save();renderExam();}
   else if(t.matches('#exName,#exScope,#exLevel,.ex-f,.ex-c')){readExamForm();}
