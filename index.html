@@ -43,7 +43,7 @@
 .doc .src{color:var(--muted);font-size:.9rem;margin:0}
 .doc .refs{font-size:.92rem}
 .doc .refs li{margin:.5rem 0}
-/* 我的標記筆記：我劃的重點／不熟、我的心得 */
+/* 我的標記筆記：紅＝主要重點、綠＝次要重點、我的心得 */
 .doc mark.my-hl{background:#CDEBD8;color:inherit;padding:0 1px}
 .doc mark.my-st{background:#F9D3DF;color:inherit;padding:0 1px;box-shadow:inset 0 -2px 0 #B0245A}
 .doc .mynote{border-left:3px solid var(--teal);background:#F2F8F6;padding:.45rem .95rem;margin:.5rem 0 1rem}
@@ -56,7 +56,7 @@
 .doc figure.bookfig img{display:block;max-width:100%;height:auto;margin:0 auto .4rem;cursor:zoom-in}
 .doc figure.bookfig figcaption{font-size:.86rem;line-height:1.5;color:var(--muted)}
 .doc figure.bookfig.missing{color:var(--muted);font-size:.88rem}
-/* 我的記號：綠＝劃重點，粉紅＝不熟，「註」＝有註記 */
+/* 我的記號：紅＝主要重點，綠＝次要重點，「註」＝有註記 */
 .doc mark.ann{background:#CDEBD8;color:inherit;padding:0 1px;cursor:pointer}
 .doc mark.ann.star{background:#F9D3DF;box-shadow:inset 0 -2px 0 #B0245A}
 .doc .ann-chip{font:600 .7rem/1 var(--sans);color:#fff;background:var(--teal);padding:.12rem .3rem;margin-left:.2rem;cursor:pointer;vertical-align:super}
@@ -151,7 +151,7 @@ mark.q{background:#BFE3DC}
 /* 複習卡片 */
 .rev-bar{display:flex;flex-wrap:wrap;gap:.6rem 1.2rem;align-items:center;margin-bottom:1rem}
 .rev-card{background:var(--paper);border:1px solid var(--line);border-top:4px solid var(--teal);padding:1.3rem 1.5rem;min-height:14rem}
-.rev-card.st{border-top-color:#B0245A}.rev-card.mn{border-top-color:var(--plum)}.rev-card.qr{border-top-color:#C9A227}
+.doc table:has(th.th-red) td:first-child,.doc table:has(th.th-red) th:first-child{min-width:5.5em;font-weight:600}.doc table:has(th.th-red) td:nth-child(2){min-width:12em}.doc table:has(th.th-red) td:nth-child(3){min-width:9em;color:#3c4a44}.doc th.th-red{background:#F9D3DF}.doc th.th-green{background:#CDEBD8}.rev-card.st{border-top-color:#B0245A}.rev-card.hl{border-top-color:#3E8E5E}.rev-card.tb{border-top-color:#B0245A}.rev-card.tb .doc{font-size:1rem}.rev-card.tb th:nth-child(2){background:#F9D3DF}.rev-card.tb th:nth-child(3){background:#CDEBD8}.rev-card.mn{border-top-color:var(--plum)}.rev-card.qr{border-top-color:#C9A227}
 .rev-meta{font-size:.85rem;color:var(--muted);margin:0 0 .7rem;display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap}
 .rev-card .doc{font-size:1.08rem}
 .rev-nav{display:flex;justify-content:space-between;gap:.6rem;margin:1rem 0;flex-wrap:wrap}
@@ -285,7 +285,7 @@ dialog h3{font:700 1.1rem/1.4 var(--serif);margin:0 0 .6rem}
   <span id="saved"></span>
 </header>
 <main id="main"></main>
-<div id="annBar" hidden role="toolbar" aria-label="替選取的文字做記號"><button data-act="annAdd" data-kind="hl"><span class="sw" style="background:#CDEBD8"></span>劃重點</button><button data-act="annAdd" data-kind="star"><span class="sw" style="background:#F9D3DF"></span>不熟</button><button data-act="annAdd" data-kind="note">加註記</button><button data-act="annList">我的記號</button></div>
+<div id="annBar" hidden role="toolbar" aria-label="替選取的文字做記號"><button data-act="annAdd" data-kind="star"><span class="sw" style="background:#F9D3DF"></span>紅：主要</button><button data-act="annAdd" data-kind="hl"><span class="sw" style="background:#CDEBD8"></span>綠：次要</button><button data-act="annAdd" data-kind="note">加註記</button><button data-act="annList">我的記號</button></div>
 <div id="status" hidden><span id="statusText"></span><button data-act="stop">停止</button></div>
 <div id="toast" role="status"></div>
 <dialog id="dlg"></dialog>
@@ -319,7 +319,7 @@ const saveCfg=()=>{try{localStorage.setItem('gn_cfg',JSON.stringify(CFG));}catch
 let saveT; function save(){clearTimeout(saveT);saveT=setTimeout(async()=>{await DB.set('state',S);$('#saved').textContent='已儲存在這台裝置 '+new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});},250);}
 
 const TOUCH=matchMedia('(pointer:coarse)').matches;
-const UI={rev:{ch:'',type:'st',order:'seq',i:0,list:null},tab:'notes',chapterId:null,onlyNew:false,q:'',examId:null,editSec:null,treeOpen:false,examCh:'',annFilter:'all'};
+const UI={rev:{ch:'',type:'tb',order:'seq',i:0,list:null},tab:'notes',chapterId:null,onlyNew:false,q:'',examId:null,editSec:null,treeOpen:false,examCh:'',annFilter:'all'};
 const getCh=id=>S.chapters.find(c=>c.id===id);
 const getBook=id=>S.books.find(b=>b.id===id);
 const getSrc=id=>S.sources.find(s=>s.id===id);
@@ -363,7 +363,7 @@ function mdRender(src){
     if(/^\s*(-{3,}|\*{3,})\s*$/.test(l)){out+='<hr>';i++;continue;}
     if((m=l.match(/^\s*!\[([^\]]*)\]\(fig:([\w.-]+)\)\s*$/))){const f=(S.figs||{})[m[2]];out+=f&&f.src&&f.src.length?'<figure class="bookfig" data-fig="'+esc(m[2])+'">'+f.src.map((u,k)=>'<img src="'+esc(u)+'" alt="'+esc(m[1])+(f.src.length>1?'（'+(k+1)+'/'+f.src.length+'）':'')+'" loading="lazy">').join('')+'<figcaption>'+inlineMd(m[1])+'</figcaption></figure>':'<figure class="bookfig missing">［圖表未匯入：'+inlineMd(m[1])+'］</figure>';i++;continue;}
     if(isTableRow(l)&&i+1<L.length&&isTableSep(L[i+1])){
-      out+='<div class="tw"><table><thead><tr>'+cells(l).map(c=>'<th>'+lineMd(c)+'</th>').join('')+'</tr></thead><tbody>';i+=2;
+      out+='<div class="tw"><table><thead><tr>'+cells(l).map(c=>'<th'+(/（紅）\s*$/.test(c)?' class="th-red"':/（綠）\s*$/.test(c)?' class="th-green"':'')+'>'+lineMd(c)+'</th>').join('')+'</tr></thead><tbody>';i+=2;
       while(i<L.length&&isTableRow(L[i])){out+='<tr>'+cells(L[i]).map(c=>'<td>'+lineMd(c)+'</td>').join('')+'</tr>';i++;}
       out+='</tbody></table></div>';continue;
     }
@@ -808,7 +808,7 @@ function examMd(e){
 function refsHtml(text){const u=usedSources(text);return u.length?'<h3>新文獻出處</h3><ol class="refs">'+u.map(s=>'<li id="src-'+s.id+'"><strong>'+esc(s.short)+'</strong><br>'+esc(srcLine(s))+(s.limitations?'<br><span class="src">限制：'+esc(s.limitations)+'</span>':'')+'</li>').join('')+'</ol>':'';}
 function chapterHtml(c){return '<p class="src">《'+esc(bookTitle(c))+'》'+(c.pages?'，第 '+esc(c.pages)+' '+(c.unit||'頁'):'')+'</p><h2 id="'+c.id+'">'+esc(c.title)+'</h2>'+c.sections.map(s=>'<section data-akey="m:'+s.id+'"><h3>'+lineMd(s.heading)+'</h3>'+mdRender(s.md)+'</section>').join('');}
 function offlineHtml(title,bodyHtml,toc){
-  return '<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>'+esc(title)+'</title><style>'+$('#noteCss').textContent+'body{margin:0;background:#fff}.wrap{max-width:52rem;margin:0 auto;padding:1.5rem max(1rem,env(safe-area-inset-right)) 4rem max(1rem,env(safe-area-inset-left))}.toc a{display:inline-block;padding:.3rem 0;color:var(--teal-d)}.toc{font-size:.95rem;border-bottom:1px solid var(--line);padding-bottom:1rem;margin-bottom:2.5rem}.doc h2{margin-top:.2rem}.doc p.src{margin-top:3rem}.doc h2+p.src,.doc li p.src{margin-top:0}@media print{.doc{font-size:10.5pt;line-height:1.6}}</style></head><body><div class="wrap doc"><h2 style="margin-top:0">'+esc(title)+'</h2><p class="src">匯出日期 '+today()+'。黃色劃線的行是新文獻補充，行尾是出處。'+((S.annos||[]).length?'綠底是你劃的重點，粉紅底是標為不熟，括號內是你的註記。':'')+'</p>'+(toc?'<div class="toc">'+toc+'</div>':'')+bodyHtml+'</div></body></html>';
+  return '<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>'+esc(title)+'</title><style>'+$('#noteCss').textContent+'body{margin:0;background:#fff}.wrap{max-width:52rem;margin:0 auto;padding:1.5rem max(1rem,env(safe-area-inset-right)) 4rem max(1rem,env(safe-area-inset-left))}.toc a{display:inline-block;padding:.3rem 0;color:var(--teal-d)}.toc{font-size:.95rem;border-bottom:1px solid var(--line);padding-bottom:1rem;margin-bottom:2.5rem}.doc h2{margin-top:.2rem}.doc p.src{margin-top:3rem}.doc h2+p.src,.doc li p.src{margin-top:0}@media print{.doc{font-size:10.5pt;line-height:1.6}}</style></head><body><div class="wrap doc"><h2 style="margin-top:0">'+esc(title)+'</h2><p class="src">匯出日期 '+today()+'。黃色劃線的行是新文獻補充，行尾是出處。'+((S.annos||[]).length?'紅底是主要重點，綠底是次要重點，括號內是你的註記。':'')+'</p>'+(toc?'<div class="toc">'+toc+'</div>':'')+bodyHtml+'</div></body></html>';
 }
 function exportMaster(kind){
   if(!S.chapters.length){toast('還沒有筆記可以匯出');return;}
@@ -943,7 +943,7 @@ function renderExam(){
       if(UI.examCh&&!chs.some(c=>c.id===UI.examCh))UI.examCh='';
       const shown=UI.examCh?chs.filter(c=>c.id===UI.examCh):chs;
       const nA=(S.annos||[]).filter(a=>a.key.startsWith('e:'+e.id+':')).length;
-      h+='<h3 class="st" id="exNotes">'+esc(e.name)+'</h3><p class="row noprint"><span class="pair"><label for="exCh">顯示</label><select id="exCh"><option value="">全部章節（很長）</option>'+chs.map(c=>'<option value="'+c.id+'"'+(c.id===UI.examCh?' selected':'')+'>'+esc(c.title)+'</option>').join('')+'</select></span></p><p class="row small noprint"><button class="link" data-act="annList">我的記號（'+nA+'）</button><button class="link" data-act="exportExam" data-kind="html">匯出離線 HTML</button><button class="link" data-act="exportExam" data-kind="md">匯出 Markdown</button><button class="link" data-act="print">列印</button></p><p class="small muted noprint">選取任何一段文字，下方會出現工具列，可以劃重點、標不熟或加註記。　<label class="chk"><input type="checkbox" class="evToggle"'+(CFG.hideEv?'':' checked')+'> 顯示依據（試驗／指引出處）</label></p><div id="exTocHolder" class="noprint"></div><div class="doc">'+shown.map(c=>'<p class="src" style="margin-top:2.5rem">《'+esc(bookTitle(c))+'》'+(e.notes[c.id].rev!==c.rev?'　母本已更新，這份是舊版':'')+'</p><h2>'+esc(c.title)+'</h2><div data-akey="e:'+e.id+':'+c.id+'">'+mdRender(e.notes[c.id].md)+'</div>').join('')+(UI.examCh?'<p class="row noprint" style="margin-top:2rem">'+(()=>{const i=chs.findIndex(c=>c.id===UI.examCh);return (i>0?'<button class="btn" data-act="exGoCh" data-id="'+chs[i-1].id+'">上一章</button>':'')+(i<chs.length-1?'<button class="btn" data-act="exGoCh" data-id="'+chs[i+1].id+'">下一章</button>':'');})()+'</p>':'')+'</div>';
+      h+='<h3 class="st" id="exNotes">'+esc(e.name)+'</h3><p class="row noprint"><span class="pair"><label for="exCh">顯示</label><select id="exCh"><option value="">全部章節（很長）</option>'+chs.map(c=>'<option value="'+c.id+'"'+(c.id===UI.examCh?' selected':'')+'>'+esc(c.title)+'</option>').join('')+'</select></span></p><p class="row small noprint"><button class="link" data-act="annList">我的記號（'+nA+'）</button><button class="link" data-act="exportExam" data-kind="html">匯出離線 HTML</button><button class="link" data-act="exportExam" data-kind="md">匯出 Markdown</button><button class="link" data-act="print">列印</button></p><p class="small muted noprint">選取任何一段文字，下方會出現工具列，可以標紅（主要重點）、標綠（次要重點）或加註記。　<label class="chk"><input type="checkbox" class="evToggle"'+(CFG.hideEv?'':' checked')+'> 顯示依據（試驗／指引出處）</label></p><div id="exTocHolder" class="noprint"></div><div class="doc">'+shown.map(c=>'<p class="src" style="margin-top:2.5rem">《'+esc(bookTitle(c))+'》'+(e.notes[c.id].rev!==c.rev?'　母本已更新，這份是舊版':'')+'</p><h2>'+esc(c.title)+'</h2><div data-akey="e:'+e.id+':'+c.id+'">'+mdRender(e.notes[c.id].md)+'</div>').join('')+(UI.examCh?'<p class="row noprint" style="margin-top:2rem">'+(()=>{const i=chs.findIndex(c=>c.id===UI.examCh);return (i>0?'<button class="btn" data-act="exGoCh" data-id="'+chs[i-1].id+'">上一章</button>':'')+(i<chs.length-1?'<button class="btn" data-act="exGoCh" data-id="'+chs[i+1].id+'">下一章</button>':'');})()+'</p>':'')+'</div>';
     }
   }
   $('#main').innerHTML=h+'</div>';
@@ -966,7 +966,7 @@ function renderSet(){
 
 /* ========== 互動 ========== */
 
-/* ========== 我的記號：選取文字 → 劃重點／不熟／註記 ==========
+/* ========== 我的記號：選取文字 → 紅主要／綠次要／註記 ==========
    記號不寫進筆記內文，而是記住「選到的文字＋前後文」，每次畫面重繪時再找回原處，
    所以重新整理或修改筆記後，只要那段文字還在就會留著。 */
 const ANN_CTX=16;
@@ -1046,11 +1046,11 @@ function annAdd(kind){
   const a={id:'A'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),key:sel.key,quote:sel.quote,pre:sel.pre,suf:sel.suf,star:kind==='star',note:'',at:today()};
   getSelection().removeAllRanges();$('#annBar').hidden=true;ANNSEL=null;
   if(kind==='note'){annEdit(a,true);return;}
-  S.annos.push(a);save();rerender();toast(kind==='star'?'已標為不熟':'已劃重點');
+  S.annos.push(a);save();rerender();toast(kind==='star'?'已標為主要重點（紅）':'已標為次要重點（綠）');
 }
 function annEdit(a,isNew){
   const d=$('#dlg');
-  d.innerHTML='<h3>'+(isNew?'加註記':'我的記號')+'</h3><p class="small muted">'+esc(annWhere(a).kind+'｜'+annWhere(a).label)+'</p><blockquote style="margin:.6rem 0;padding:.4rem .8rem;border-left:3px solid var(--teal);background:var(--wash)">'+esc(a.quote.length>300?a.quote.slice(0,300)+'…':a.quote)+'</blockquote><label class="f" for="annNote">註記</label><textarea id="annNote" rows="4" placeholder="例如：考過、和 Sedlis 搞混、口試要講的理由">'+esc(a.note||'')+'</textarea><p><label class="chk"><input type="checkbox" id="annStar"'+(a.star?' checked':'')+'> 標為不熟（粉紅底，會出現在「只看不熟」）</label></p><p class="row"><button class="btn pri" data-act="annSave">儲存</button><button class="btn" data-act="closeDlg">取消</button>'+(isNew?'':'<button class="link" data-act="annGo" data-id="'+a.id+'">到原文</button><button class="link danger" data-act="annDel">刪除這個記號</button>')+'</p>';
+  d.innerHTML='<h3>'+(isNew?'加註記':'我的記號')+'</h3><p class="small muted">'+esc(annWhere(a).kind+'｜'+annWhere(a).label)+'</p><blockquote style="margin:.6rem 0;padding:.4rem .8rem;border-left:3px solid var(--teal);background:var(--wash)">'+esc(a.quote.length>300?a.quote.slice(0,300)+'…':a.quote)+'</blockquote><label class="f" for="annNote">註記</label><textarea id="annNote" rows="4" placeholder="例如：考過、和 Sedlis 搞混、口試要講的理由">'+esc(a.note||'')+'</textarea><p><label class="chk"><input type="checkbox" id="annStar"'+(a.star?' checked':'')+'> 標為主要重點（紅底；不勾＝次要重點，綠底）</label></p><p class="row"><button class="btn pri" data-act="annSave">儲存</button><button class="btn" data-act="closeDlg">取消</button>'+(isNew?'':'<button class="link" data-act="annGo" data-id="'+a.id+'">到原文</button><button class="link danger" data-act="annDel">刪除這個記號</button>')+'</p>';
   d._anno=a;d._isNew=isNew;if(!d.open)d.showModal();setTimeout(()=>$('#annNote')?.focus(),50);
 }
 function annList(){
@@ -1058,8 +1058,8 @@ function annList(){
   const all=(S.annos||[]).map(a=>({a,w:annWhere(a)})).sort((x,y)=>x.w.order-y.w.order||x.a.at.localeCompare(y.a.at));
   const list=all.filter(x=>f==='all'||(f==='star'&&x.a.star)||(f==='note'&&x.a.note));
   const n=k=>all.filter(x=>k==='all'||(k==='star'&&x.a.star)||(k==='note'&&x.a.note)).length;
-  d.innerHTML='<h3>我的記號</h3><div class="ann-filter small">'+[['all','全部'],['star','只看不熟'],['note','有註記']].map(([k,v])=>'<button class="link" data-act="annFilter" data-f="'+k+'"'+(k===f?' style="font-weight:700;text-decoration:none"':'')+'>'+v+'（'+n(k)+'）</button>').join('')+'</div>'
-    +(list.length?'<ul class="ann-list">'+list.map(({a,w})=>'<li><span class="small muted">'+esc(w.kind+'｜'+w.label)+'</span><span class="q '+(a.star?'star':'hl')+'">'+esc(a.quote.length>160?a.quote.slice(0,160)+'…':a.quote)+'</span>'+(a.note?'<span class="small">註：'+esc(a.note)+'</span><br>':'')+'<button class="link small" data-act="annGo" data-id="'+a.id+'">到原文</button>　<button class="link small" data-act="annOpen" data-id="'+a.id+'">編輯</button></li>').join('')+'</ul>':'<p class="muted">'+(all.length?'這個篩選下沒有記號。':'還沒有記號。讀的時候選取一段文字，下方的工具列就能劃重點、標不熟或加註記。')+'</p>')
+  d.innerHTML='<h3>我的記號</h3><div class="ann-filter small">'+[['all','全部'],['star','只看紅（主要）'],['note','有註記']].map(([k,v])=>'<button class="link" data-act="annFilter" data-f="'+k+'"'+(k===f?' style="font-weight:700;text-decoration:none"':'')+'>'+v+'（'+n(k)+'）</button>').join('')+'</div>'
+    +(list.length?'<ul class="ann-list">'+list.map(({a,w})=>'<li><span class="small muted">'+esc(w.kind+'｜'+w.label)+'</span><span class="q '+(a.star?'star':'hl')+'">'+esc(a.quote.length>160?a.quote.slice(0,160)+'…':a.quote)+'</span>'+(a.note?'<span class="small">註：'+esc(a.note)+'</span><br>':'')+'<button class="link small" data-act="annGo" data-id="'+a.id+'">到原文</button>　<button class="link small" data-act="annOpen" data-id="'+a.id+'">編輯</button></li>').join('')+'</ul>':'<p class="muted">'+(all.length?'這個篩選下沒有記號。':'還沒有記號。讀的時候選取一段文字，下方的工具列就能標紅（主要重點）、標綠（次要重點）或加註記。')+'</p>')
     +'<p class="row" style="margin-top:1rem"><button class="btn pri" data-act="closeDlg">關閉</button></p>';
   if(!d.open)d.showModal();
 }
@@ -1072,7 +1072,7 @@ function annGo(id){
   mk.scrollIntoView({block:'center'});mk.classList.add('flash');setTimeout(()=>mk.classList.remove('flash'),1600);
 }
 
-/* ========== 複習：一張一張看不熟、重點、心得、口訣、快速複習 ========== */
+/* ========== 複習：一張一張看紅（主要）、綠（次要）、心得、口訣、快速複習 ========== */
 const _tx=document.createElement('div');
 const textOf=h=>{_tx.innerHTML=h;return _tx.textContent;};
 const lineText=l=>isTableSep(l)?'':(isTableRow(l)?cells(l).map(c=>textOf(lineMd(c))).join(''):textOf(mdRender(l)));
@@ -1101,15 +1101,22 @@ function mnemonicCards(){
   return out;
 }
 function qrCards(){
+  const out=[],seen=new Set();
+  for(const e of S.exams)for(const c of allChapters()){const n=e.notes[c.id];if(!n)continue;const m=n.md.match(/(^|\n)## (?:快速複習|重點回顧)\n([\s\S]*?)(\n## |$)/);if(!m)continue;
+    for(const l of m[2].split('\n'))if(/^\s*-\s+/.test(l)){const t=l.replace(/\s+/g,'');if(seen.has(t))continue;seen.add(t);out.push({kind:'qr',c,where:e.name,md:l.trim()});}}
+  return out;
+}
+function tableCards(){
   const out=[];
-  for(const e of S.exams)for(const c of allChapters()){const n=e.notes[c.id];if(!n)continue;const m=n.md.match(/(^|\n)## 快速複習\n([\s\S]*?)(\n## |$)/);if(!m)continue;
-    for(const l of m[2].split('\n'))if(/^\s*-\s+/.test(l))out.push({kind:'qr',c,where:e.name,md:l.trim()});}
+  for(const e of S.exams)for(const c of allChapters()){const n=e.notes[c.id];if(!n)continue;const m=n.md.match(/(^|\n)## 複習簡表\n([\s\S]*?)(?=\n## |$)/);if(!m)continue;
+    for(const blk of m[2].split(/\n(?=### )/)){const b=blk.trim();if(/\|/.test(b))out.push({kind:'tb',c,where:e.name,md:b});}}
   return out;
 }
 function revBuild(){
   const r=UI.rev,chs=allChapters(),order=new Map(chs.map((c,i)=>[c.id,i]));let list=[];
   if(r.type==='mn')list=mnemonicCards();
   else if(r.type==='qr')list=qrCards();
+  else if(r.type==='tb')list=tableCards();
   else{
     const keyOrder=a=>{const m=a.key.match(/^m:(C\d+)\.(\d+)$/);return m?order.get(m[1])*1000+(+m[2]):1e9;};
     list=(S.annos||[]).filter(a=>a.key.startsWith('m:')&&(r.type==='all'||(r.type==='st'&&a.star)||(r.type==='hl'&&!a.star)||(r.type==='note'&&a.note)))
@@ -1119,25 +1126,25 @@ function revBuild(){
   if(r.order==='rand'){for(let i=list.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[list[i],list[j]]=[list[j],list[i]];}}
   r.list=list;r.i=Math.min(r.i,Math.max(0,list.length-1));
 }
-const REV_TYPES=[['st','不熟'],['hl','重點'],['note','我的心得'],['mn','口訣'],['qr','快速複習'],['all','全部標記']];
+const REV_TYPES=[['tb','複習簡表（紅主綠次）'],['st','紅：主要重點'],['hl','綠：次要重點'],['note','我的心得'],['mn','口訣'],['qr','快速複習'],['all','全部標記']];
 function renderRev(){
   const r=UI.rev;if(!r.list)revBuild();
   const chs=allChapters();
-  let h='<div class="narrow"><h2 class="vt">複習</h2><p class="lead">一張一張看你標的不熟、劃的重點、寫的心得，或口訣與快速複習。鍵盤 ← → 或手機左右滑動換張。</p>';
+  let h='<div class="narrow"><h2 class="vt">複習</h2><p class="lead">一張一張看你標的紅色主要重點、綠色次要重點、寫的心得，或口訣與快速複習。鍵盤 ← → 或手機左右滑動換張。</p>';
   h+='<div class="rev-bar noprint"><span class="pair"><label for="revType">看什麼</label><select id="revType">'+REV_TYPES.map(([k,v])=>'<option value="'+k+'"'+(k===r.type?' selected':'')+'>'+v+'</option>').join('')+'</select></span><span class="pair"><label for="revCh">章節</label><select id="revCh"><option value="">全部章節</option>'+chs.map(c=>'<option value="'+c.id+'"'+(c.id===r.ch?' selected':'')+'>'+esc(c.title)+'</option>').join('')+'</select></span><span class="pair"><label for="revOrder">順序</label><select id="revOrder"><option value="seq"'+(r.order==='seq'?' selected':'')+'>依章節</option><option value="rand"'+(r.order==='rand'?' selected':'')+'>隨機</option></select></span></div>';
-  if(!r.list.length){$('#main').innerHTML=h+'<div class="rev-card"><p class="muted">這個篩選下沒有卡片。'+(r.type==='st'?'在母本筆記選取文字、按「不熟」就會出現在這裡。':'')+'</p></div></div>';return;}
+  if(!r.list.length){$('#main').innerHTML=h+'<div class="rev-card"><p class="muted">這個篩選下沒有卡片。'+(r.type==='st'?'在母本筆記選取文字、按「紅：主要」就會出現在這裡。':'')+'</p></div></div>';return;}
   const it=r.list[r.i];let body='',meta='',extra='';
   if(it.a){
     const a=it.a,x=annLines(a);
     meta=esc((x?.c?.title||'')+(x?.s?' › '+x.s.heading.replace(/\s*\(p\.[^)]*\)\s*$/,''):''));
     body='<div class="doc" id="revBody" data-akey="rev">'+mdRender(x&&x.md?x.md:a.quote)+'</div>';
     if(a.note)body+='<div class="doc"><div class="mynote"><strong>我的心得</strong>'+mdRender(a.note)+'</div></div>';
-    extra='<button class="link" data-act="annGo" data-id="'+a.id+'">到原文</button>'+(a.star?'<button class="link" data-act="revKnown">這張熟了</button>':'<button class="link" data-act="revUnknown">改標不熟</button>');
+    extra='<button class="link" data-act="annGo" data-id="'+a.id+'">到原文</button>'+(a.star?'<button class="link" data-act="revKnown">降為綠（次要）</button>':'<button class="link" data-act="revUnknown">升為紅（主要）</button>');
   }else{
     meta=esc((it.c?it.c.title:'')+'｜'+it.where);
     body='<div class="doc">'+mdRender(it.md)+'</div>';
   }
-  const kindLabel={st:'不熟',hl:'重點',mn:'口訣',qr:'快速複習'}[it.kind]||'';
+  const kindLabel={st:'紅・主要',hl:'綠・次要',mn:'口訣',qr:'快速複習',tb:'複習簡表'}[it.kind]||'';
   const nav='<div class="rev-nav noprint"><button class="btn" data-act="revPrev"'+(r.i===0?' disabled':'')+'>上一張</button><span class="rev-count">'+(r.i+1)+' / '+r.list.length+'</span><button class="btn pri" data-act="revNext"'+(r.i>=r.list.length-1?' disabled':'')+'>下一張</button></div>';
   h+=nav+'<div class="rev-card '+it.kind+'" id="revCard"><p class="rev-meta"><span>'+meta+'</span><span>'+kindLabel+'</span></p>'+body+'<p class="row small" style="margin-top:1rem">'+extra+'</p></div>'+nav+'</div>';
   $('#main').innerHTML=h;
@@ -1224,8 +1231,8 @@ const ACT={
   prog:b=>pgCycle(b.dataset.pkey),
   revPrev:()=>revMove(-1),
   revNext:()=>revMove(1),
-  revKnown:()=>{const it=UI.rev.list[UI.rev.i];if(!it||!it.a)return;it.a.star=false;save();if(UI.rev.type==='st'){UI.rev.list.splice(UI.rev.i,1);UI.rev.i=Math.min(UI.rev.i,Math.max(0,UI.rev.list.length-1));}else it.kind='hl';renderRev();toast('已改為「重點」，不再列在不熟');},
-  revUnknown:()=>{const it=UI.rev.list[UI.rev.i];if(!it||!it.a)return;it.a.star=true;it.kind='st';save();renderRev();toast('已標為不熟');},
+  revKnown:()=>{const it=UI.rev.list[UI.rev.i];if(!it||!it.a)return;it.a.star=false;save();if(UI.rev.type==='st'){UI.rev.list.splice(UI.rev.i,1);UI.rev.i=Math.min(UI.rev.i,Math.max(0,UI.rev.list.length-1));}else it.kind='hl';renderRev();toast('已降為綠色次要重點');},
+  revUnknown:()=>{const it=UI.rev.list[UI.rev.i];if(!it||!it.a)return;it.a.star=true;it.kind='st';save();renderRev();toast('已升為紅色主要重點');},
   jump:b=>jumpTo(b.dataset.target),
   annList:()=>annList(),
   annFilter:b=>{UI.annFilter=b.dataset.f;annList();},
