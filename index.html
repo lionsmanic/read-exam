@@ -323,7 +323,7 @@ const saveCfg=()=>{try{localStorage.setItem('gn_cfg',JSON.stringify(CFG));}catch
 let saveT; function save(){clearTimeout(saveT);saveT=setTimeout(async()=>{await DB.set('state',S);$('#saved').textContent='已儲存在這台裝置 '+new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});},250);}
 
 const TOUCH=matchMedia('(pointer:coarse)').matches;
-const UI={rev:{ch:'',type:'tb',order:'seq',view:'card',shown:120,i:0,list:null},tab:'notes',chapterId:null,onlyNew:false,q:'',examId:null,editSec:null,treeOpen:false,examCh:'',annFilter:'all'};
+const UI={rev:{ch:(CFG.rev&&CFG.rev.ch)||'',type:(CFG.rev&&CFG.rev.type)||'tb',order:(CFG.rev&&CFG.rev.order)||'seq',view:(CFG.rev&&CFG.rev.view)||'card',seed:(CFG.rev&&CFG.rev.seed)||0,shown:120,i:0,list:null},tab:'notes',chapterId:null,onlyNew:false,q:'',examId:null,editSec:null,treeOpen:false,examCh:'',annFilter:'all'};
 const getCh=id=>S.chapters.find(c=>c.id===id);
 const getBook=id=>S.books.find(b=>b.id===id);
 const getSrc=id=>S.sources.find(s=>s.id===id);
@@ -850,7 +850,7 @@ function exportExam(kind){
 }
 
 /* ========== 畫面 ========== */
-function go(tab){if(TTS.on)ttsStop();UI.tab=tab;if(tab==='rev')UI.rev.list=null;$$('#tabs button').forEach(b=>b.dataset.tab===tab?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'));({notes:renderNotes,book:renderBook,lit:renderLit,exam:renderExam,rev:renderRev,set:renderSet})[tab]();window.scrollTo(0,0);}
+function go(tab){if(TTS.on)ttsStop();if(UI.tab==='rev'&&tab!=='rev')UI.rev.y=window.scrollY;const back=tab==='rev'&&UI.tab!=='rev';UI.tab=tab;$$('#tabs button').forEach(b=>b.dataset.tab===tab?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'));({notes:renderNotes,book:renderBook,lit:renderLit,exam:renderExam,rev:renderRev,set:renderSet})[tab]();window.scrollTo(0,back?(UI.rev.y||0):0);}
 
 function renderNotes(){
   if(!S.chapters.length){
@@ -1062,7 +1062,7 @@ function annWhere(a){
   if((m=a.key.match(/^e:(E\d+):(C\d+)$/))){const e=S.exams.find(x=>x.id===m[1]);const c=getCh(m[2]);return {order:c?allChapters().indexOf(c):999,label:(c?c.title:'已刪除的章節'),kind:e?e.name:'考試筆記'};}
   return {order:999,label:'',kind:''};
 }
-function rerender(){UI.rev.list=null;if(UI.tab==='notes')renderPane();else if(UI.tab==='exam')renderExam();else if(UI.tab==='rev')renderRev();}
+function rerender(){if(UI.tab==='notes')renderPane();else if(UI.tab==='exam')renderExam();else if(UI.tab==='rev')renderRev();}
 function annAdd(kind){
   const sel=ANNSEL||readSelection();
   if(!sel){toast('先選取一段文字（在同一個小節內）');return;}
@@ -1230,7 +1230,12 @@ function tableCards(){
     for(const blk of m[2].split(/\n(?=### )/)){const b=blk.trim();if(/\|/.test(b))out.push({kind:'tb',c,where:e.name,md:b});}}
   return out;
 }
-function revBuild(){
+function revKey(it){return it.qid||(it.a&&('a'+it.a.id))||qzHash(it.kind+(it.c?it.c.id:'')+String(it.md||'').slice(0,120));}
+function revSig(){const r=UI.rev;return [r.type,r.ch,r.order].join('|');}
+function revSave(){const r=UI.rev,it=r.list&&r.list[r.i];const o={type:r.type,ch:r.ch,order:r.order,view:r.view,seed:r.seed,key:it?revKey(it):'',sig:revSig()};if(r.list&&/^qz[wn]$/.test(r.type))o.keys=r.list.map(revKey);CFG.rev=o;saveCfg();}
+function revRng(seed){let x=(seed>>>0)||1;return ()=>{x^=x<<13;x>>>=0;x^=x>>>17;x^=x<<5;x>>>=0;return x/4294967296;};}
+function revBuild(fresh){
+  const sv=CFG.rev||{};
   const r=UI.rev,chs=allChapters(),order=new Map(chs.map((c,i)=>[c.id,i]));let list=[];
   if(r.type==='mn')list=mnemonicCards();
   else if(r.type==='qr')list=qrCards();
@@ -1245,8 +1250,11 @@ function revBuild(){
       .map(a=>({kind:a.star?'st':'hl',a,c:getCh(a.key.match(/^m:(C\d+)\./)?.[1]),k:keyOrder(a)})).sort((x,y)=>x.k-y.k);
   }
   if(r.ch)list=list.filter(x=>x.c&&x.c.id===r.ch);
-  if(r.order==='rand'){for(let i=list.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[list[i],list[j]]=[list[j],list[i]];}}
-  r.list=list;r.i=Math.min(r.i,Math.max(0,list.length-1));
+  if(!fresh&&sv.sig===revSig()&&sv.keys&&/^qz[wn]$/.test(r.type)){const all=new Map(quizCards().map(q=>[q.qid,q]));list=sv.keys.map(k=>all.get(k)).filter(Boolean);}
+  else if(r.order==='rand'){if(!r.seed)r.seed=(Date.now()%2147483647)||7;const rnd=revRng(r.seed);for(let i=list.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[list[i],list[j]]=[list[j],list[i]];}}
+  r.list=list;
+  if(!fresh&&sv.key&&sv.sig===revSig()){const k=list.findIndex(x=>revKey(x)===sv.key);if(k>=0)r.i=k;}
+  r.i=Math.min(r.i,Math.max(0,list.length-1));
 }
 const REV_TYPES=[['tb','複習簡表（紅主綠次）'],['rd','朗讀背誦'],['qz','練習題（全部）'],['qzn','練習題（還沒做過）'],['qzw','練習題（上次答錯）'],['st','紅：主要重點'],['hl','綠：次要重點'],['note','我的心得'],['mn','口訣'],['qr','快速複習'],['all','全部標記']];
 function revItem(it,n){
@@ -1272,7 +1280,7 @@ function renderRev(keepTts){
   const r=UI.rev;if(!r.list)revBuild();
   const chs=allChapters();
   let h='<div class="narrow"><h2 class="vt">複習</h2><p class="lead rev-lead">看你標的紅色主要重點、綠色次要重點、寫的心得，或複習簡表、口訣與快速複習。可一張一張看（鍵盤 ← → 或手機左右滑動換張），也可全部列出一次捲著看。</p>';
-  h+='<div class="rev-bar noprint"><span class="pair"><label for="revType">看什麼</label><select id="revType">'+REV_TYPES.map(([k,v])=>'<option value="'+k+'"'+(k===r.type?' selected':'')+'>'+v+'</option>').join('')+'</select></span><span class="pair"><label for="revCh">章節</label><select id="revCh"><option value="">全部章節</option>'+chs.map(c=>'<option value="'+c.id+'"'+(c.id===r.ch?' selected':'')+'>'+esc(c.title)+'</option>').join('')+'</select></span><span class="pair"><label for="revOrder">順序</label><select id="revOrder"><option value="seq"'+(r.order==='seq'?' selected':'')+'>依章節</option><option value="rand"'+(r.order==='rand'?' selected':'')+'>隨機</option></select></span><span class="pair"><label for="revView">呈現</label><select id="revView"><option value="card"'+(r.view!=='all'?' selected':'')+'>一張一張</option><option value="all"'+(r.view==='all'?' selected':'')+'>全部列出</option></select></span></div>';
+  h+='<div class="rev-bar noprint"><span class="pair"><label for="revType">看什麼</label><select id="revType">'+REV_TYPES.map(([k,v])=>'<option value="'+k+'"'+(k===r.type?' selected':'')+'>'+v+'</option>').join('')+'</select></span><span class="pair"><label for="revCh">章節</label><select id="revCh"><option value="">全部章節</option>'+chs.map(c=>'<option value="'+c.id+'"'+(c.id===r.ch?' selected':'')+'>'+esc(c.title)+'</option>').join('')+'</select></span><span class="pair"><label for="revOrder">順序</label><select id="revOrder"><option value="seq"'+(r.order==='seq'?' selected':'')+'>依章節</option><option value="rand"'+(r.order==='rand'?' selected':'')+'>隨機</option></select></span><span class="pair"><label for="revView">呈現</label><select id="revView"><option value="card"'+(r.view!=='all'?' selected':'')+'>一張一張</option><option value="all"'+(r.view==='all'?' selected':'')+'>全部列出</option></select></span><span class="rev-tools">'+(r.order==='rand'?'<button class="link" data-act="revReshuffle">🔀 重新隨機</button>':'')+'<button class="link" data-act="revRefresh" title="依最新的記號與作答紀錄重建清單，停在目前這張">↻ 重新整理清單</button></span></div>';
   const rate=String(CFG.ttsRate||1),rates=[['0.8','慢'],['1','正常'],['1.2','快'],['1.4','更快']];
   const qm=CFG.qzMode||'show';
   const qzBar=/^qz/.test(r.type)?'<p class="small noprint qz-bar"><span class="pair"><label for="qzMode">答案</label><select id="qzMode"><option value="show"'+(qm==='show'?' selected':'')+'>直接顯示（快速瀏覽）</option><option value="quiz"'+(qm==='quiz'?' selected':'')+'>先作答再看</option></select></span>　<span class="qz-score" id="qzScore"></span>　<button class="link" data-act="qzReset">清除作答紀錄</button></p>':'';
@@ -1285,14 +1293,14 @@ function renderRev(keepTts){
       if(r.order==='seq'&&ct&&ct!==last){h+='<h3 class="rev-ch">'+esc(ct)+'</h3>';last=ct;}
       h+='<div class="rev-card rev-flat '+it.kind+'"><p class="rev-meta"><span>'+x.meta+'</span><span>'+x.kindLabel+'</span></p>'+x.body+'<p class="row small"><button class="link noprint" data-act="ttsFrom" data-i="'+n+'">▶ 從這張唸</button>'+x.extra+'</p></div>';});
     h+='</div>'+(lim<r.list.length?'<p class="noprint" style="text-align:center;margin:1.2rem 0"><button class="btn pri" data-act="revMore">再顯示 '+Math.min(120,r.list.length-lim)+' 張（共 '+r.list.length+'）</button>　<button class="btn" data-act="revMoreAll">全部顯示</button></p>':'')+'</div>';
-    $('#main').innerHTML=h;revWrap($('#revAll'),items);qzMarks($('#main'));qzScore();return;
+    $('#main').innerHTML=h;revWrap($('#revAll'),items);qzMarks($('#main'));qzScore();revSave();return;
   }
   const it=r.list[r.i],x=revItem(it,r.i);
   const nav='<div class="rev-nav noprint"><button class="btn" data-act="revPrev"'+(r.i===0?' disabled':'')+'>上一張</button><span class="rev-count">'+(r.i+1)+' / '+r.list.length+'</span><button class="btn pri" data-act="revNext"'+(r.i>=r.list.length-1?' disabled':'')+'>下一張</button></div>';
   h+=ttsBar+nav+'<div class="rev-card '+it.kind+'" id="revCard"><p class="rev-meta"><span>'+x.meta+'</span><span>'+x.kindLabel+'</span></p>'+x.body+'<p class="row small" style="margin-top:1rem">'+x.extra+'</p></div>'+nav+'</div>';
-  $('#main').innerHTML=h;revWrap($('#revCard'),[it]);qzMarks($('#main'));qzScore();
+  $('#main').innerHTML=h;revWrap($('#revCard'),[it]);qzMarks($('#main'));qzScore();revSave();
 }
-function revMove(d,keepTts){const r=UI.rev;if(!r.list)return;const n=Math.max(0,Math.min(r.list.length-1,r.i+d));if(n!==r.i){r.i=n;renderRev(keepTts);window.scrollTo(0,0);if(keepTts)ttsBtns();}}
+function revMove(d,keepTts){const r=UI.rev;if(!r.list)return;const n=Math.max(0,Math.min(r.list.length-1,r.i+d));if(n!==r.i){r.i=n;renderRev(keepTts);revSave();window.scrollTo(0,0);if(keepTts)ttsBtns();}}
 document.addEventListener('keydown',e=>{if(UI.tab!=='rev'||UI.rev.view==='all'||e.target.closest('input,textarea,select')||$('#dlg').open)return;if(e.key==='ArrowRight')revMove(1);else if(e.key==='ArrowLeft')revMove(-1);});
 let _tx0=null;
 document.addEventListener('touchstart',e=>{if(UI.tab==='rev'&&e.target.closest('#revCard'))_tx0=[e.touches[0].clientX,e.touches[0].clientY];},{passive:true});
@@ -1384,6 +1392,8 @@ const ACT={
   ttsAll:()=>ttsStart([...$$('#revAll .rev-card')],0),
   ttsFrom:b=>ttsStart([...$$('#revAll .rev-card')],+b.dataset.i),
   ttsStop:()=>ttsStop(),
+  revReshuffle:()=>{UI.rev.seed=(Date.now()%2147483647)||7;UI.rev.i=0;UI.rev.shown=120;revBuild(true);renderRev();revSave();window.scrollTo(0,0);toast('已重新隨機排序');},
+  revRefresh:()=>{const it=UI.rev.list&&UI.rev.list[UI.rev.i];const k=it?revKey(it):'';revBuild(true);if(k){const j=UI.rev.list.findIndex(x=>revKey(x)===k);if(j>=0)UI.rev.i=j;}renderRev();revSave();toast('清單已更新');},
   revMore:()=>{const y=scrollY;UI.rev.shown=(UI.rev.shown||120)+120;renderRev();scrollTo(0,y);},
   revMoreAll:()=>{const y=scrollY;UI.rev.shown=1e9;renderRev();scrollTo(0,y);},
   revUnknown:b=>{const k=b.dataset.i!=null?+b.dataset.i:UI.rev.i,it=UI.rev.list[k];if(!it||!it.a)return;it.a.star=true;it.kind='st';save();const y=scrollY;if(UI.rev.type==='hl'){UI.rev.list.splice(k,1);UI.rev.i=Math.min(UI.rev.i,Math.max(0,UI.rev.list.length-1));}renderRev();if(UI.rev.view==='all')scrollTo(0,y);toast('已升為紅色主要重點');},
@@ -1403,7 +1413,7 @@ const ACT={
   testKey:async()=>{ACT.saveCfg();const out=$('#cfOut');out.textContent='連線中…';try{const ctrl=new AbortController();const r=await gemini({parts:[{text:'只回覆兩個字：正常'}],thinking:'low',signal:ctrl.signal});out.textContent='連線正常。實際使用的模型：'+r.model;}catch(e){out.textContent=e.message;}},
   listModels:async()=>{ACT.saveCfg();const out=$('#cfOut');out.textContent='查詢中…';try{const res=await fetch(API+'/models?pageSize=200',{headers:{'x-goog-api-key':CFG.apiKey}});if(!res.ok)throw new Error('查詢失敗 '+res.status+'：'+(await apiError(res)).slice(0,200));const j=await res.json();const names=(j.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes('generateContent')).map(m=>m.name.replace('models/','')).filter(n=>/gemini/.test(n)&&!/image|tts|audio|embedding|live/.test(n));$('#models').innerHTML=names.map(n=>'<option value="'+esc(n)+'">').join('');out.textContent=names.length?'這把 key 可用的模型：'+names.join('、'):'這把 key 沒有可用的 Gemini 模型';}catch(e){out.textContent=e.message;}},
   backup:()=>download('婦癌唸書筆記_備份_'+today()+'.json',JSON.stringify({app:'gynonc-study-notes',v:1,state:S}),'application/json'),
-  restore:()=>pick('.json',false,async fs=>{try{const j=JSON.parse(await fs[0].text());const st=j.state||j;if(!Array.isArray(st.chapters)||!st.seq)throw new Error('x');if(S.chapters.length&&!confirm('還原會取代目前這台裝置上的筆記（'+S.chapters.length+' 章）。'+((S.annos||[]).length?'備份檔裡若沒有記號，會保留你現在的 '+S.annos.length+' 個記號；若備份檔有記號，則以備份檔為準。':'')+'確定？'))return;const keep=(!st.annos||!st.annos.length)&&(S.annos||[]).length?S.annos:null;const keepP=(!st.progress||!Object.keys(st.progress).length)&&Object.keys(S.progress||{}).length?S.progress:null;const keepQ=(!st.quiz||!Object.keys(st.quiz).length)&&Object.keys(S.quiz||{}).length?S.quiz:null;S=Object.assign(blank(),st);if(keep)S.annos=keep;if(keepP)S.progress=keepP;if(keepQ)S.quiz=keepQ;UI.chapterId=null;UI.examId=null;save();toast('已還原 '+S.chapters.length+' 章筆記'+(keep?'，保留你原本的 '+keep.length+' 個記號':''));go('notes');}catch(e){toast('這不是有效的備份檔');}}),
+  restore:()=>pick('.json',false,async fs=>{try{const j=JSON.parse(await fs[0].text());const st=j.state||j;if(!Array.isArray(st.chapters)||!st.seq)throw new Error('x');if(S.chapters.length&&!confirm('還原會取代目前這台裝置上的筆記（'+S.chapters.length+' 章）。'+((S.annos||[]).length?'備份檔裡若沒有記號，會保留你現在的 '+S.annos.length+' 個記號；若備份檔有記號，則以備份檔為準。':'')+'確定？'))return;const keep=(!st.annos||!st.annos.length)&&(S.annos||[]).length?S.annos:null;const keepP=(!st.progress||!Object.keys(st.progress).length)&&Object.keys(S.progress||{}).length?S.progress:null;const keepQ=(!st.quiz||!Object.keys(st.quiz).length)&&Object.keys(S.quiz||{}).length?S.quiz:null;S=Object.assign(blank(),st);if(keep)S.annos=keep;if(keepP)S.progress=keepP;if(keepQ)S.quiz=keepQ;UI.chapterId=null;UI.examId=null;UI.rev.list=null;CFG.rev=null;saveCfg();save();toast('已還原 '+S.chapters.length+' 章筆記'+(keep?'，保留你原本的 '+keep.length+' 個記號':''));go('notes');}catch(e){toast('這不是有效的備份檔');}}),
   wipe:()=>{if(!confirm('清除這台裝置上的所有筆記、文獻與考試筆記？這個動作無法復原，建議先下載備份。'))return;S=blank();UI.chapterId=null;UI.examId=null;save();renderSet();toast('已清除');}
 };
 document.addEventListener('click',e=>{
@@ -1434,7 +1444,7 @@ document.addEventListener('change',e=>{
   else if(t.id==='qzMode'){CFG.qzMode=t.value;saveCfg();UI.qzSel={};renderRev();}
   else if(t.id==='ttsRate'){CFG.ttsRate=t.value;saveCfg();}
   else if(t.id==='ttsAuto'){TTS.auto=t.checked;}
-  else if(t.id==='revType'||t.id==='revCh'||t.id==='revOrder'||t.id==='revView'){UI.rev[{revType:'type',revCh:'ch',revOrder:'order',revView:'view'}[t.id]]=t.value;UI.rev.i=0;UI.rev.shown=120;revBuild();renderRev();window.scrollTo(0,0);}
+  else if(t.id==='revType'||t.id==='revCh'||t.id==='revOrder'||t.id==='revView'){UI.rev[{revType:'type',revCh:'ch',revOrder:'order',revView:'view'}[t.id]]=t.value;if(t.id!=='revView'){UI.rev.i=0;UI.rev.shown=120;revBuild(true);}renderRev();window.scrollTo(0,0);}
   else if(t.id==='exCh'){UI.examCh=t.value;renderExam();$('#exNotes')?.scrollIntoView();}
   else if(t.id==='exNew'&&t.value){readExamForm();const e2=newExam(t.value==='__blank'?'':t.value);UI.examId=e2.id;save();renderExam();}
   else if(t.matches('#exName,#exScope,#exLevel,.ex-f,.ex-c')){readExamForm();}
