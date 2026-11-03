@@ -1276,7 +1276,8 @@ function revBuild(fresh){
     list=(S.annos||[]).filter(a=>a.key.startsWith('m:')&&(r.type==='all'||(r.type==='st'&&a.star)||(r.type==='hl'&&!a.star)||(r.type==='note'&&a.note)))
       .map(a=>({kind:a.star?'st':'hl',a,c:getCh(a.key.match(/^m:(C\d+)\./)?.[1]),k:keyOrder(a)})).sort((x,y)=>x.k-y.k);
   }
-  if(r.ch)list=list.filter(x=>x.c&&x.c.id===r.ch);
+  if(r.ch&&r.type==='oral')list=list.filter(x=>'K'+((x.title.match(/病例\s*(\d+)/)||[])[1])===r.ch);
+  else if(r.ch)list=list.filter(x=>x.c&&x.c.id===r.ch);
   if(!fresh&&sv.sig===revSig()&&sv.keys&&/^qz[wn]$/.test(r.type)){const all=new Map(quizCards().map(q=>[q.qid,q]));list=sv.keys.map(k=>all.get(k)).filter(Boolean);}
   else if(r.order==='rand'){if(!r.seed)r.seed=(Date.now()%2147483647)||7;const rnd=revRng(r.seed);for(let i=list.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[list[i],list[j]]=[list[j],list[i]];}}
   r.list=list;
@@ -1293,7 +1294,7 @@ function revItem(it,n){
     if(a.note)body+='<div class="doc"><div class="mynote"><strong>我的心得</strong>'+(()=>{const h=mdRender(noteMd(a.note));return (/nt-(mn|key)/.test(h)?'<p class="nt-legend"><mark class="nt-mn">紫＝口訣</mark>　<mark class="nt-key">黃＝重點整理</mark></p>':'')+h;})()+'</div></div>';
     extra='<button class="link" data-act="annGo" data-id="'+a.id+'">到原文</button>'+(a.star?'<button class="link" data-act="revKnown" data-i="'+n+'">降為綠（次要）</button>':'<button class="link" data-act="revUnknown" data-i="'+n+'">升為紅（主要）</button>');
   }else if(it.kind==='oral'){
-    meta=esc(it.c?it.c.title:'');body='<div class="doc oral-body">'+mdRender(it.md)+'</div>'+qzSrcHtml(it).replace('筆記原文段落','相關筆記原文')+oralRdHtml(it.c,it.rds||[]);
+    meta=esc('病例 '+((it.title.match(/病例\s*(\d+)/)||[])[1]||'')+'／12');body='<div class="doc oral-body">'+mdRender(it.md)+'</div>'+qzSrcHtml(it).replace('筆記原文段落','相關筆記原文')+oralRdHtml(it.c,it.rds||[]);
   }else if(it.kind==='qz'){
     meta=esc(it.c?it.c.title:'');body=qzHtml(it,n);
   }else{
@@ -1309,7 +1310,7 @@ function renderRev(keepTts){
   const r=UI.rev;if(!r.list)revBuild();
   const chs=allChapters();
   let h='<div class="narrow"><h2 class="vt">複習'+(!/^qz/.test(r.type)&&CFG.revProf&&CFG.revProf[CFG.lastQz||'qz']?'<button class="btn qz-back noprint" data-act="revGoQuiz">📝 回到練習題</button>':'')+'</h2><p class="lead rev-lead">看你標的紅色主要重點、綠色次要重點、寫的心得，或複習簡表、口訣與快速複習。可一張一張看（鍵盤 ← → 或手機左右滑動換張），也可全部列出一次捲著看。</p>';
-  h+='<div class="rev-bar noprint"><span class="pair"><label for="revType">看什麼</label><select id="revType">'+REV_TYPES.map(([k,v])=>'<option value="'+k+'"'+(k===r.type?' selected':'')+'>'+v+'</option>').join('')+'</select></span><span class="pair"><label for="revCh">章節</label><select id="revCh"><option value="">全部章節</option>'+chs.map(c=>'<option value="'+c.id+'"'+(c.id===r.ch?' selected':'')+'>'+esc(c.title)+'</option>').join('')+'</select></span><span class="pair"><label for="revOrder">順序</label><select id="revOrder"><option value="seq"'+(r.order==='seq'?' selected':'')+'>依章節</option><option value="rand"'+(r.order==='rand'?' selected':'')+'>隨機</option></select></span><span class="pair"><label for="revView">呈現</label><select id="revView"><option value="card"'+(r.view!=='all'?' selected':'')+'>一張一張</option><option value="all"'+(r.view==='all'?' selected':'')+'>全部列出</option></select></span><span class="rev-tools">'+(r.order==='rand'?'<button class="link" data-act="revReshuffle">🔀 重新隨機</button>':'')+'<button class="link" data-act="revRefresh" title="依最新的記號與作答紀錄重建清單，停在目前這張">↻ 重新整理清單</button></span></div>';
+  h+='<div class="rev-bar noprint"><span class="pair"><label for="revType">看什麼</label><select id="revType">'+REV_TYPES.map(([k,v])=>'<option value="'+k+'"'+(k===r.type?' selected':'')+'>'+v+'</option>').join('')+'</select></span><span class="pair"><label for="revCh">'+(r.type==='oral'?'病例':'章節')+'</label><select id="revCh">'+(r.type==='oral'?'<option value="">12 例依序</option>'+oralCards().map(o=>{const n=(o.title.match(/病例\s*(\d+)/)||[])[1];return '<option value="K'+n+'"'+('K'+n===r.ch?' selected':'')+'>'+esc(o.title.replace(/（.*$/,'').slice(0,28))+'</option>';}).join(''):'<option value="">全部章節</option>'+chs.map(c=>'<option value="'+c.id+'"'+(c.id===r.ch?' selected':'')+'>'+esc(c.title)+'</option>').join(''))+'</select></span><span class="pair"><label for="revOrder">順序</label><select id="revOrder"><option value="seq"'+(r.order==='seq'?' selected':'')+'>'+(r.type==='oral'?'依病例 1→12':'依章節')+'</option><option value="rand"'+(r.order==='rand'?' selected':'')+'>隨機</option></select></span><span class="pair"><label for="revView">呈現</label><select id="revView"><option value="card"'+(r.view!=='all'?' selected':'')+'>一張一張</option><option value="all"'+(r.view==='all'?' selected':'')+'>全部列出</option></select></span><span class="rev-tools">'+(r.order==='rand'?'<button class="link" data-act="revReshuffle">🔀 重新隨機</button>':'')+'<button class="link" data-act="revRefresh" title="依最新的記號與作答紀錄重建清單，停在目前這張">↻ 重新整理清單</button></span></div>';
   const rate=String(CFG.ttsRate||1),rates=[['0.8','慢'],['1','正常'],['1.2','快'],['1.4','更快']];
   const qm=CFG.qzMode||'show';
   const oralBar=r.type==='oral'?'<p class="small noprint qz-bar"><label class="chk"><input type="checkbox" id="oralHide"'+(CFG.oralHide?' checked':'')+'> 先藏答案與指教（點問題才顯示）</label></p>':'';
