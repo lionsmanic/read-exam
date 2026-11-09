@@ -1257,7 +1257,7 @@ function oxCards(){
     C10:['卵巢癌維持治療：怎麼選','鉑抗性卵巢癌','我的病例下一步：卵巢癌','Carboplatin','Paclitaxel','Bevacizumab','PARP inhibitors','Pegylated liposomal doxorubicin','Gemcitabine','Topotecan','Docetaxel','BEP（Bleomycin）','Etoposide','Cyclophosphamide']};
   const out=[];for(const [cid,nm] of OX_SITES)for(const [k,lab] of OX_PARTS){
     const pick=src[k].filter(it=>it.c&&it.c.id===cid);
-    if(k==='why')for(const t of W[cid].concat(['過敏與減敏：床邊流程','劑量調整：骨髓、腎、神經','ADC 新藥總覽'])){const w=src.why.find(x=>x.title===t);if(w&&!pick.includes(w))pick.push(w);}
+    if(k==='why')for(const t of W[cid].concat(['淋巴結廓清：範圍與邊界','過敏與減敏：床邊流程','劑量調整：骨髓、腎、神經','ADC 新藥總覽'])){const w=src.why.find(x=>x.title===t);if(w&&!pick.includes(w))pick.push(w);}
     for(const it of pick)out.push({...it,ox:nm+'｜'+lab,oxp:k,oxc:cid});}
   return out;
 }
