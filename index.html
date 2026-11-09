@@ -1252,12 +1252,12 @@ const OX_SITES=[['C7','子宮頸癌'],['C8','子宮內膜癌'],['C10','卵巢癌
 const OX_PARTS=[['oral','我的病例'],['why','委員原理題'],['tb','複習簡表'],['rd','朗讀背誦'],['mn','口訣'],['num','數字'],['stage','分期表']];
 function oxCards(){
   const src={oral:oralCards(),why:whyCards(),tb:tableCards(),rd:readCards(),mn:mnemonicCards(),num:numCards(),stage:stageCards()};
-  const W={C7:['放射治療原理','Cisplatin','Paclitaxel','Carboplatin','Bevacizumab','Immune checkpoint inhibitors','Topotecan','5-FU','Irinotecan'],
-    C8:['放射治療原理','Carboplatin','Paclitaxel','Doxorubicin／Epirubicin','Immune checkpoint inhibitors','Ifosfamide','Gemcitabine','Docetaxel'],
-    C10:['Carboplatin','Paclitaxel','Bevacizumab','PARP inhibitors','Pegylated liposomal doxorubicin','Gemcitabine','Topotecan','Docetaxel','BEP（Bleomycin）','Etoposide','Cyclophosphamide']};
+  const W={C7:['子宮頸癌：免疫治療與 ADC','我的病例下一步：子宮頸癌','放射治療原理','Cisplatin','Paclitaxel','Carboplatin','Bevacizumab','Immune checkpoint inhibitors','Topotecan','5-FU','Irinotecan'],
+    C8:['內膜癌：分子分類與免疫治療','我的病例下一步：子宮內膜癌','放射治療原理','Carboplatin','Paclitaxel','Doxorubicin／Epirubicin','Immune checkpoint inhibitors','Ifosfamide','Gemcitabine','Docetaxel'],
+    C10:['卵巢癌維持治療：怎麼選','鉑抗性卵巢癌','我的病例下一步：卵巢癌','Carboplatin','Paclitaxel','Bevacizumab','PARP inhibitors','Pegylated liposomal doxorubicin','Gemcitabine','Topotecan','Docetaxel','BEP（Bleomycin）','Etoposide','Cyclophosphamide']};
   const out=[];for(const [cid,nm] of OX_SITES)for(const [k,lab] of OX_PARTS){
     const pick=src[k].filter(it=>it.c&&it.c.id===cid);
-    if(k==='why')for(const t of W[cid]){const w=src.why.find(x=>x.title===t);if(w&&!pick.includes(w))pick.push(w);}
+    if(k==='why')for(const t of W[cid].concat(['過敏與減敏：床邊流程','劑量調整：骨髓、腎、神經','ADC 新藥總覽'])){const w=src.why.find(x=>x.title===t);if(w&&!pick.includes(w))pick.push(w);}
     for(const it of pick)out.push({...it,ox:nm+'｜'+lab,oxp:k,oxc:cid});}
   return out;
 }
